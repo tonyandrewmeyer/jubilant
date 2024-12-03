@@ -6,17 +6,17 @@ help:
 
 .PHONY: fmt
 fmt:
-	uvx ruff@0.8.1 format
+	uv run ruff format
 
 .PHONY: lint
 lint:
-	uvx ruff@0.8.1 check
-	uvx ruff@0.8.1 format --check
+	uv run ruff check
+	uv run ruff format --check
 
 .PHONY: static
 static:
-	uvx pyright@1.1.389
+	uv run pyright
 
 .PHONY: unit
 unit:
-	uvx pytest@8.3.4
+	uv run pytest
