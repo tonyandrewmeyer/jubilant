@@ -1,4 +1,3 @@
-
 import dataclasses
 
 
@@ -36,7 +35,9 @@ class Status:
     def from_dict(cls, d):
         self = cls()
         applications = d.get('applications') or {}
-        self.applications = {name: ApplicationStatus.from_dict(status) for name, status in applications.items()}
+        self.applications = {
+            name: ApplicationStatus.from_dict(status) for name, status in applications.items()
+        }
         return self
 
     # TODO: helper methods

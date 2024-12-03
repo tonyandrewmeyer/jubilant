@@ -7,20 +7,18 @@ import typing
 
 from ._types import Status
 
-
 __all__ = [
+    'Status',
     'add_model',
     'cli',
     'deploy',
     'status',
-    'Status',
-    'StatusInfo',
     'wait_status',
 ]
 
 
 def cli(*args: str) -> str:
-    """TODO"""
+    """TODO."""
     # TODO: good error handling and include stderr in exception
     process = subprocess.run(['juju', *args], check=True, capture_output=True, encoding='UTF-8')
     return process.stdout
@@ -29,10 +27,10 @@ def cli(*args: str) -> str:
 def add_model(
     model_name: str,
     *,
-    controller: str  | None = None,
+    controller: str | None = None,
     config: dict[str, typing.Any] | None = None,  # TODO: is Any correct here?
 ) -> None:
-    """TODO"""
+    """TODO."""
     args = ['add-model', model_name]
 
     if controller is not None:
@@ -55,7 +53,7 @@ def deploy(
     trust: bool = False,
     # TODO: include all the arguments we think people we use
 ) -> None:
-    """TODO"""
+    """TODO."""
     args = ['deploy', charm_name]
     if application_name is not None:
         args.append(application_name)
@@ -80,7 +78,7 @@ def status(
     *,
     model: str | None = None,
 ) -> Status:
-    """TODO"""
+    """TODO."""
     stdout = cli('status', '--format', 'json')
     result = json.loads(stdout)
     return Status.from_dict(result)
@@ -90,16 +88,16 @@ def wait_status(
     ready_func: typing.Callable[[Status], bool],
     *,
     model: str | None = None,
-    timeout: float = 10*60,
+    timeout: float = 10 * 60,
     delay: float = 1,
     successes: int = 3,
 ) -> Status:
-    """TODO"""
+    """TODO."""
     start = time.time()
     success_count = 0
     while time.time() - start < timeout:
         this_status = status()
-#        logger.info('wait_status: %s', this_status)  # TODO: ensure better debugging
+        #        logger.info('wait_status: %s', this_status)  # TODO: ensure better debugging
         print('TODO wait_status', this_status)
         if ready_func(this_status):
             success_count += 1

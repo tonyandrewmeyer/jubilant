@@ -1,0 +1,97 @@
+[project]
+name = "jute"
+description = "Juju CLI wrapper for charm integration testing"
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Linting tools configuration
+[tool.ruff]
+line-length = 99
+target-version = "py312"
+
+# Ruff formatter configuration
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # isort
+    "I001",
+    # pep8-naming
+    "N",
+    # flake8-builtins
+    "A",
+    # pyupgrade
+    "UP",
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # Ruff specific
+    "RUF",
+    # Perflint
+    "PERF",
+    # pyflakes-docstrings
+    "D",
+]
+ignore = [
+    # Use of `assert` detected
+    "S101",
+    # Do not `assert False`
+    "B011",
+    # `pickle`, `cPickle`, `dill`, and `shelve` modules are possibly insecure
+    "S403",
+    # `subprocess` module is possibly insecure
+    "S404",
+
+    # No explicit `stacklevel` keyword argument found
+    "B028",
+
+    # Return condition directly, prefer readability.
+    "SIM103",
+    # Use contextlib.suppress() instead of try/except: pass
+    "SIM105",
+    # Use a single `with` statement with multiple contexts instead of nested `with` statements
+    "SIM117",
+
+    # Missing docstring in magic method
+    "D105",
+    # Missing docstring in `__init__`
+    "D107",
+
+    # Manual dict comprehension.
+    "PERF403",
+
+    # Convert {} from `TypedDict` functional to class syntax
+    # Note that since we have some `TypedDict`s that cannot use the class
+    # syntax, we're currently choosing to be consistent in syntax even though
+    # some can be moved to the class syntax.
+    "UP013",
+
+    ## Likely worth doing, but later.
+
+    # `subprocess` call: check for execution of untrusted input
+    "S603",
+    # Starting a process with a partial executable path
+    "S607",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id", "min", "map", "range", "type", "input", "format"]
+
+[tool.pyright]
+include = ["jute/*.py"]
+pythonVersion = "3.12"
+pythonPlatform = "All"
