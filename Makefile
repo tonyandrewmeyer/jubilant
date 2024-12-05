@@ -1,5 +1,5 @@
 
-.PHONE: help
+.PHONY: help
 help:
 	@echo "Usage: make [target]\n\nTargets:"
 	@awk -F: '/^[a-z]+:/ { print "   ", $$1 }' Makefile
