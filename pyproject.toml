@@ -103,3 +103,8 @@ builtins-ignorelist = ["id", "min", "map", "range", "type", "input", "format"]
 include = ["jute/*.py"]
 pythonVersion = "3.12"
 pythonPlatform = "All"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

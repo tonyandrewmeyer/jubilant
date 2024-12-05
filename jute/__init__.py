@@ -51,6 +51,17 @@ class Juju:
 
         self.cli(*args)
 
+    def destroy_model(
+        self,
+        model_name: str,
+        *,
+        force=False,
+    ):
+        args = ['destroy-model', model_name, '--no-prompt']
+        if force:
+            args.append('--force')
+        self.cli(*args)
+
     def deploy(
         self,
         charm_name: str,
