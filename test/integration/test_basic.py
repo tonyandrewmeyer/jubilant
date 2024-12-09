@@ -1,11 +1,11 @@
-import jute
+import jubilant
 
 import pytest
 
 
 @pytest.fixture
 def juju():
-    j = jute.Juju()
+    j = jubilant.Juju()
     j.add_model('tt')  # TODO: random model name
     yield j
     j.destroy_model('tt')

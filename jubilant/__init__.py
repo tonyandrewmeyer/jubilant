@@ -1,4 +1,4 @@
-"""Jute is a Pythonic wrapper around the Juju CLI for integration testing."""
+"""Jubilant is a Pythonic wrapper around the Juju CLI for integration testing."""
 
 import json
 import subprocess
