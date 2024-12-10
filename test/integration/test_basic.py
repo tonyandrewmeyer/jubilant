@@ -1,6 +1,6 @@
-import jubilant
-
 import pytest
+
+import jubilant
 
 
 @pytest.fixture

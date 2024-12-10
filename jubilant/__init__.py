@@ -57,6 +57,7 @@ class Juju:
         *,
         force=False,
     ):
+        """TODO."""
         args = ['destroy-model', model_name, '--no-prompt']
         if force:
             args.append('--force')
