@@ -12,6 +12,8 @@ __all__ = [
     'Status',
 ]
 
+__version__ = '0.0.0a1'
+
 
 class Juju:
     """TODO."""
