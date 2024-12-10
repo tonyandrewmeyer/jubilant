@@ -19,7 +19,7 @@ static:
 
 .PHONY: unit
 unit:
-	uv run pytest
+	uv run pytest test/unit
 
 .PHONY: integration
 integration:
