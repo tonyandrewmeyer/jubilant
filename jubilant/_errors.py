@@ -1,8 +1,8 @@
 import subprocess
 
 
-class RunError(subprocess.CalledProcessError):
-    """Subclass of CalledProcessError that includes stdout/stderr in the string."""
+class CLIError(subprocess.CalledProcessError):
+    """Subclass of CalledProcessError that includes stdout and stderr in the __str__."""
 
     def __str__(self):
         s = super().__str__()
@@ -11,3 +11,9 @@ class RunError(subprocess.CalledProcessError):
         if self.stderr:
             s += '\nStderr:\n' + self.stderr
         return s
+
+
+class WaitError(Exception):
+    """Raised when :meth:`Juju.wait` returns false."""
+
+    # TODO: want a "status" or other attributes?
