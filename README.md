@@ -11,3 +11,29 @@ Jubilant is a Python library that wraps the [Juju](https://juju.is/) CLI for use
 - Simple API. Any cleverness in helpers and fixtures.
 - TODO: versioning (Juju 3 and 4, maybe jubilant.compat for Juju 5 changes)
 - TODO: no async/await
+
+
+## To implement
+
+- Go over TODOs in code and fix
+- Add other commands (see below)
+- Flesh out status types in _types.py
+- Put up a docs site (presumably canonical-jubilant.readthedocs-hosted.com)
+
+Other commands we think tests will use and should be implemented:
+
+```
+# add-secret                 Add a new secret. ### MAYBE???
+# add-unit                   Adds one or more units to a deployed application.
+# config                     Gets, sets, or resets configuration for a deployed
+# exec                       Run the commands on the remote targets specified.
+# integrate                  Integrate two applications.
+# offer                      Offer application endpoints for use in other models.
+# refresh                    Refresh an application's charm.
+# remove-application         Remove applications from the model.
+# remove-unit                Remove application units from the model.
+# run                        Run an action on a specified unit.
+# show-operation             Show results of an operation.
+# ssh                        Initiates an SSH session on a Juju machine or container.
+# trust                      Sets the trust status of a deployed application to true.
+```

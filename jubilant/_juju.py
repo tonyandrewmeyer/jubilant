@@ -93,7 +93,7 @@ class Juju:
         resources: dict[str, str] | None = None,
         revision: int | None = None,
         trust: bool = False,
-        # TODO: include all the arguments we think people we use
+        # TODO: include all the arguments we think people will use
     ) -> None:
         """TODO."""
         args = ['deploy', charm]
@@ -190,7 +190,7 @@ class Juju:
 def _exception_with_status(exc_type: type[Exception], msg: str, status: Status | None):
     if status is None:
         return exc_type(msg)
-    if hasattr(exc_type, 'add_note'):
+    if hasattr(exc_type, 'add_note'):  # available in Python 3.11+ (PEP 678)
         exc = exc_type(msg)
         exc.add_note(str(status))
         return exc
