@@ -14,6 +14,4 @@ class CLIError(subprocess.CalledProcessError):
 
 
 class WaitError(Exception):
-    """Raised when :meth:`Juju.wait` returns false."""
-
-    # TODO: want a "status" or other attributes?
+    """Raised when :meth:`Juju.wait`'s "error" callable returns False."""
