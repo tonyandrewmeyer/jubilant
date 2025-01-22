@@ -4,7 +4,6 @@ import os
 import subprocess
 import time
 from collections.abc import Callable
-from typing import Any
 
 from ._errors import CLIError, WaitError
 from ._types import Status
@@ -13,18 +12,33 @@ logger = logging.getLogger('jubilant')
 
 
 class Juju:
-    """TODO."""
+    """Instantiate this class to run Juju commands.
+
+    Most methods directly call a single Juju CLI command. If a CLI command doesn't yet exist as a
+    method, use :meth:`cli`.
+
+    Example::
+
+        juju = jubilant.Juju()
+        juju.deploy('snappass-test')
+
+    Args:
+        model: If specified, operate on this Juju model. If not specified, use the current model.
+        wait_timeout: The default timeout for :meth:`wait` (in seconds) if that method's *timeout*
+            parameter is not specified.
+        cli_binary: Path to the Juju CLI binary. If not specified, assumes "juju" is in the PATH.
+    """
 
     def __init__(
         self,
         *,
         model: str | None = None,
-        wait_timeout: float = 3 * 60.0,  # TODO: what should the default be?
-        juju_bin: str | os.PathLike | None = None,
+        wait_timeout: float = 3 * 60.0,
+        cli_binary: str | os.PathLike | None = None,
     ):
         self.model = model
         self.wait_timeout = wait_timeout
-        self.juju_bin = juju_bin or 'juju'
+        self.cli_binary = cli_binary or 'juju'
 
     def __repr__(self):
         args = []
@@ -38,7 +52,7 @@ class Juju:
             args = (args[0], '--model', self.model) + args[1:]
         try:
             process = subprocess.run(
-                [self.juju_bin, *args], check=True, capture_output=True, encoding='UTF-8'
+                [self.cli_binary, *args], check=True, capture_output=True, encoding='UTF-8'
             )
         except subprocess.CalledProcessError as e:
             raise CLIError(e.returncode, e.cmd, e.stdout, e.stderr) from None
@@ -49,9 +63,9 @@ class Juju:
         model: str,
         *,
         controller: str | None = None,
-        config: dict[str, Any] | None = None,  # TODO: is Any correct here?
+        config: dict[str, bool | int | float | str] | None = None,
     ) -> None:
-        """TODO."""
+        """Add a named model and set this instance's model to it."""
         args = ['add-model', model]
 
         if controller is not None:
@@ -64,7 +78,7 @@ class Juju:
         self.model = model
 
     def switch(self, model: str):
-        """TODO."""
+        """Switch to a named model and set this instance's model to it."""
         self.cli('switch', model, include_model=False)
         self.model = model
 
@@ -74,7 +88,11 @@ class Juju:
         *,
         force=False,
     ):
-        """TODO."""
+        """Terminate all machines (or containers) and resources for a model.
+
+        Also sets this instance's :attr:`model` to None, meaning use the current Juju model for
+        subsequent commands.
+        """
         args = ['destroy-model', model, '--no-prompt']
         if force:
             args.append('--force')
@@ -88,14 +106,14 @@ class Juju:
         *,
         base: str | None = None,
         channel: str | None = None,
-        config: dict[str, Any] | None = None,  # TODO: is Any correct here?
+        config: dict[str, bool | int | float | str] | None = None,
         num_units: int = 1,
         resources: dict[str, str] | None = None,
         revision: int | None = None,
         trust: bool = False,
         # TODO: include all the arguments we think people will use
     ) -> None:
-        """TODO."""
+        """Deploy an application or bundle."""
         args = ['deploy', charm]
         if app is not None:
             args.append(app)
@@ -120,7 +138,7 @@ class Juju:
         self.cli(*args)
 
     def status(self) -> Status:
-        """TODO."""
+        """Fetch the status of the current model, including its applications and units."""
         args = ['status', '--format', 'json']
         stdout = self.cli(*args)
         result = json.loads(stdout)
@@ -141,7 +159,17 @@ class Juju:
         and returns the last status after the *ready* callable returns true for *successes*
         times in a row.
 
-        TODO: examples
+        This function logs the status object after the first status call, and after subsequent
+        calls if the status object has changed.
+
+        Example::
+
+            juju = jubilant.Juju()
+            juju.deploy('snappass-test')
+            juju.wait(
+                lambda status: status.apps['snappass-test'].is_active,
+                error=jubilant.any_error,
+            )
 
         Args:
             ready: Callable that takes a :class:`Status` object and returns true when the wait
@@ -156,7 +184,7 @@ class Juju:
 
         Raises:
             TimeoutError: If the *timeout* is reached.
-            WaitError: If the *error* callable returns true.
+            WaitError: If the *error* callable returns True.
         """
         if timeout is None:
             timeout = self.wait_timeout

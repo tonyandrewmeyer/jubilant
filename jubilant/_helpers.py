@@ -13,7 +13,7 @@ def all_active(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether all applications or units in *status* are in "active" status.
 
     Args:
-        status: The :class:`Status` object being tested.
+        status: The status object being tested.
         apps: An optional list of application names. If provided, only these applications
             (and their units) are tested.
     """
@@ -23,7 +23,10 @@ def all_active(status: Status, apps: Iterable[str] | None = None) -> bool:
 def all_error(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether all applications or units in *status* are in "error" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _all_statuses_are('error', status, apps)
 
@@ -31,7 +34,10 @@ def all_error(status: Status, apps: Iterable[str] | None = None) -> bool:
 def all_blocked(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether all applications or units in *status* are in "blocked" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _all_statuses_are('blocked', status, apps)
 
@@ -39,7 +45,10 @@ def all_blocked(status: Status, apps: Iterable[str] | None = None) -> bool:
 def all_maintenance(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether all applications or units in *status* are in "maintenance" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _all_statuses_are('maintenance', status, apps)
 
@@ -47,7 +56,10 @@ def all_maintenance(status: Status, apps: Iterable[str] | None = None) -> bool:
 def all_waiting(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether all applications or units in *status* are in "waiting" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _all_statuses_are('waiting', status, apps)
 
@@ -56,7 +68,7 @@ def any_active(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether any application or unit in *status* is in "active" status.
 
     Args:
-        status: The :class:`Status` object being tested.
+        status: The status object being tested.
         apps: An optional list of application names. If provided, only these applications
             (and their units) are tested.
     """
@@ -66,7 +78,10 @@ def any_active(status: Status, apps: Iterable[str] | None = None) -> bool:
 def any_error(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether any application or unit in *status* is in "error" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _any_status_is('error', status, apps)
 
@@ -74,7 +89,10 @@ def any_error(status: Status, apps: Iterable[str] | None = None) -> bool:
 def any_blocked(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether any application or unit in *status* is in "blocked" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _any_status_is('blocked', status, apps)
 
@@ -82,7 +100,10 @@ def any_blocked(status: Status, apps: Iterable[str] | None = None) -> bool:
 def any_maintenance(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether any application or unit in *status* is in "maintenance" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _any_status_is('maintenance', status, apps)
 
@@ -90,7 +111,10 @@ def any_maintenance(status: Status, apps: Iterable[str] | None = None) -> bool:
 def any_waiting(status: Status, apps: Iterable[str] | None = None) -> bool:
     """Report whether any application or unit in *status* is in "waiting" status.
 
-    TODO: Args
+    Args:
+        status: The status object being tested.
+        apps: An optional list of application names. If provided, only these applications
+            (and their units) are tested.
     """
     return _any_status_is('waiting', status, apps)
 
