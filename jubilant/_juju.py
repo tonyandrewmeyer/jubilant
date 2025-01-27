@@ -40,7 +40,7 @@ class Juju:
         self.wait_timeout = wait_timeout
         self.cli_binary = cli_binary or 'juju'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         args = []
         if self.model is not None:
             args.append(f'model={self.model!r}')
@@ -77,7 +77,7 @@ class Juju:
         self.cli(*args, include_model=False)
         self.model = model
 
-    def switch(self, model: str):
+    def switch(self, model: str) -> None:
         """Switch to a named model and set this instance's model to it."""
         self.cli('switch', model, include_model=False)
         self.model = model
@@ -87,7 +87,7 @@ class Juju:
         model: str,
         *,
         force=False,
-    ):
+    ) -> None:
         """Terminate all machines (or containers) and resources for a model.
 
         Also sets this instance's :attr:`model` to None, meaning use the current Juju model for
@@ -215,7 +215,9 @@ class Juju:
         raise _exception_with_status(TimeoutError, f'timed out after {timeout}s', status)
 
 
-def _exception_with_status(exc_type: type[Exception], msg: str, status: Status | None):
+def _exception_with_status(
+    exc_type: type[Exception], msg: str, status: Status | None
+) -> Exception:
     if status is None:
         return exc_type(msg)
     if hasattr(exc_type, 'add_note'):  # available in Python 3.11+ (PEP 678)
