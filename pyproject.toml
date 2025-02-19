@@ -7,9 +7,9 @@ dynamic = ["version"]
 
 [dependency-groups]
 dev = [
-    "pyright==1.1.390",
+    "pyright==1.1.394",
     "pytest==8.3.4",
-    "ruff==0.8.2",
+    "ruff==0.9.6",
 ]
 docs = [
     "sphinx==8.1.3",
@@ -105,7 +105,7 @@ convention = "google"
 builtins-ignorelist = ["id", "min", "map", "range", "type", "input", "format"]
 
 [tool.ruff.lint.per-file-ignores]
-"jubilant/types.py" = [
+"jubilant/statustypes.py" = [
     # Missing docstring in public class
     "D101",
 ]
