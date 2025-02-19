@@ -6,7 +6,7 @@ import time
 from collections.abc import Callable, Iterable
 
 from ._errors import CLIError, WaitError
-from ._types import Status
+from .types import Status
 
 logger = logging.getLogger('jubilant')
 
@@ -223,7 +223,7 @@ class Juju:
         args = ['status', '--format', 'json']
         stdout = self.cli(*args)
         result = json.loads(stdout)
-        return Status.from_dict(result)
+        return Status._from_dict(result)
 
     def wait(
         self,
