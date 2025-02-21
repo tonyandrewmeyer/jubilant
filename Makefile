@@ -20,8 +20,8 @@ fix:
 	uv run ruff check --fix
 
 # Format the Python code
-.PHONY: fmt
-fmt:
+.PHONY: format
+format:
 	uv run ruff format
 
 # Run integration tests (slow, require real Juju)
@@ -33,7 +33,7 @@ integration:
 .PHONY: lint
 lint:
 	uv run ruff check
-	uv run ruff format --check
+	uv run ruff format --diff
 
 # Check static types
 .PHONY: static

@@ -1,4 +1,4 @@
-name: Unit tests
+name: CI
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
   pull_request:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -30,7 +31,7 @@ jobs:
       - name: Run static type checks
         run: make static
 
-  test:
+  unit:
     runs-on: ubuntu-latest
 
     strategy:
