@@ -36,7 +36,7 @@ __all__ = [
 
 
 class StatusError(Exception):
-    """Raised when "juju status" returns a status-error for certain types."""
+    """Raised when ``juju status`` returns a status-error for certain types."""
 
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -706,7 +706,7 @@ class RemoteAppStatus:
 
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class Status:
-    """Parsed version of the status object returned by "juju status --format=json"."""
+    """Parsed version of the status object returned by ``juju status --format=json``."""
 
     model: ModelStatus
     machines: dict[str, MachineStatus]
