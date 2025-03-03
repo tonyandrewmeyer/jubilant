@@ -4,10 +4,13 @@ import json
 import logging
 import os
 import subprocess
+import tempfile
 import time
 from collections.abc import Callable, Iterable, Mapping
-from typing import overload
+from typing import Any, overload
 
+from . import _yaml
+from ._actions import ActionError, ActionResult
 from .statustypes import Status
 
 logger = logging.getLogger('jubilant')
@@ -294,10 +297,57 @@ class Juju:
 
         self.cli(*args)
 
+    def run(self, unit: str, action: str, params: Mapping[str, Any] | None = None) -> ActionResult:
+        """Run an action on the given unit and wait for the result.
+
+        Note: this method does not support running an action on multiple units
+        at once. If you need that, let us know, and we'll consider adding it
+        with a new ``run_multiple`` method or similar.
+
+        Example::
+
+            juju = jubilant.Juju()
+            result = juju.run('mysql/0', 'get-password')
+            assert result.results['username'] == 'USER0'
+
+        Args:
+            unit: Name of unit to run the action on, for example ``mysql/0`` or
+                ``mysql/leader``.
+            action: Name of action to run.
+            params: Optional named parameters to pass to the action.
+
+        Returns:
+            The result of the action, including logs, failure message, and so on.
+
+        Raises:
+            ValueError: if the unit doesn't exist.
+            ActionError: if the action failed.
+        """
+        args = ['run', '--format', 'json', unit, action]
+
+        params_file = None
+        if params is not None:
+            with tempfile.NamedTemporaryFile('w+', delete=False) as params_file:
+                _yaml.safe_dump(params, params_file)
+            args.extend(['--params', params_file.name])
+
+        try:
+            stdout = self.cli(*args)
+            # Command doesn't return any stdout if no units exist.
+            all_results: dict[str, Any] = json.loads(stdout) if stdout.strip() else {}
+            if unit not in all_results:
+                raise ValueError(f'unit not found: {unit}')
+            result = ActionResult._from_dict(all_results[unit])
+            if not result.success:
+                raise ActionError(result)
+            return result
+        finally:
+            if params_file is not None:
+                os.remove(params_file.name)
+
     def status(self) -> Status:
         """Fetch the status of the current model, including its applications and units."""
-        args = ['status', '--format', 'json']
-        stdout = self.cli(*args)
+        stdout = self.cli('status', '--format', 'json')
         result = json.loads(stdout)
         return Status._from_dict(result)
 
