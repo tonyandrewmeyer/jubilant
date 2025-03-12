@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shlex
 import subprocess
 import tempfile
 import time
@@ -101,6 +102,10 @@ class Juju:
     ) -> None:
         """Add a named model and set this instance's model to it.
 
+        To avoid interfering with CLI users, this won't switch the Juju CLI to the
+        newly-created model. However, because :attr:`model` is set to the name of the new
+        model, all subsequent operations on this instance will use the new model.
+
         Args:
             model: Name of model to add.
             controller: Name of controller to operate in. If not specified, use the current
@@ -108,7 +113,7 @@ class Juju:
             config: Model configuration as key-value pairs, for example,
                 ``{'image-stream': 'daily'}``.
         """
-        args = ['add-model', model]
+        args = ['add-model', '--no-switch', model]
 
         if controller is not None:
             args.extend(['--controller', controller])
@@ -164,6 +169,7 @@ class Juju:
         """
         if include_model and self.model is not None:
             args = (args[0], '--model', self.model) + args[1:]
+        logger.info('cli: juju %s', shlex.join(args))
         try:
             process = subprocess.run(
                 [self.cli_binary, *args], check=True, capture_output=True, encoding='utf-8'
@@ -220,6 +226,16 @@ class Juju:
             args.extend(['--reset', ','.join(reset)])
 
         self.cli(*args)
+
+    def debug_log(self, *, limit: int = 0) -> str:
+        """Return debug log messages from a model.
+
+        Args:
+            limit: Limit the result to the most recent *limit* lines. Defaults to 0, meaning
+                return all lines in the log.
+        """
+        args = ['debug-log', '--limit', str(limit)]
+        return self.cli(*args)
 
     def deploy(
         self,
@@ -307,6 +323,7 @@ class Juju:
         self,
         model: str,
         *,
+        destroy_storage: bool = False,
         force: bool = False,
     ) -> None:
         """Terminate all machines (or containers) and resources for a model.
@@ -316,9 +333,12 @@ class Juju:
 
         Args:
             model: Name of model to destroy.
+            destroy_storage: If true, destroy all storage instances in the model.
             force: If true, force model destruction and ignore any errors.
         """
         args = ['destroy-model', model, '--no-prompt']
+        if destroy_storage:
+            args.append('--destroy-storage')
         if force:
             args.append('--force')
         self.cli(*args, include_model=False)
@@ -355,7 +375,7 @@ class Juju:
 
     def remove_unit(
         self,
-        unit: str | Iterable[str],
+        app_or_unit: str | Iterable[str],
         *,
         destroy_storage: bool = False,
         force: bool = False,
@@ -373,7 +393,7 @@ class Juju:
             juju.remove_unit(['wordpress/2', 'wordpress/3'])
 
         Args:
-            unit: On machine models, this is the name of the unit or units to remove.
+            app_or_unit: On machine models, this is the name of the unit or units to remove.
                 On Kubernetes models, this is actually the application name (a single string),
                 as individual units are not named; you must use *num_units* to remove more than
                 one unit on a Kubernetes model.
@@ -382,18 +402,18 @@ class Juju:
             num_units: Number of units to remove (Kubernetes models only).
         """
         args = ['remove-unit', '--no-prompt']
-        if isinstance(unit, str):
-            args.append(unit)
+        if isinstance(app_or_unit, str):
+            args.append(app_or_unit)
         else:
-            args.extend(unit)
+            args.extend(app_or_unit)
 
         if destroy_storage:
             args.append('--destroy-storage')
         if force:
             args.append('--force')
         if num_units:
-            if not isinstance(unit, str):
-                raise TypeError('"unit" must be a single application name if num_units specified')
+            if not isinstance(app_or_unit, str):
+                raise TypeError('"app_or_unit" must be a single app name if num_units specified')
             args.extend(['--num-units', str(num_units)])
 
         self.cli(*args)
@@ -452,16 +472,6 @@ class Juju:
         result = json.loads(stdout)
         return Status._from_dict(result)
 
-    def switch(self, model: str) -> None:
-        """Switch to a named model and set this instance's model to it.
-
-        Args:
-            model: Name of model to switch to. This can be a model name, a controller name, or in
-                ``mycontroller:mymodel`` syntax.
-        """
-        self.cli('switch', model, include_model=False)
-        self.model = model
-
     def wait(
         self,
         ready: Callable[[Status], bool],
@@ -517,7 +527,7 @@ class Juju:
             prev_status = status
             status = self.status()
             if status != prev_status:
-                logger.info('status changed:\n%s', status)
+                logger.info('wait: status changed:\n%s', status)
 
             if error is not None and error(status):
                 exc = WaitError(f'error function {error.__qualname__} returned false')
@@ -533,7 +543,7 @@ class Juju:
 
             time.sleep(delay)
 
-        exc = TimeoutError(f'timed out after {timeout}s')
+        exc = TimeoutError(f'wait timed out after {timeout}s')
         if status is not None:
             exc.add_note(str(status))
         raise exc
