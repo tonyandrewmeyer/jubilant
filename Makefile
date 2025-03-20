@@ -2,7 +2,7 @@
 .PHONY: help
 help:
 	@echo "Usage: make [target] [ARGS='additional args']\n\nTargets:"
-	@awk -F: '/^[a-z]+:/ { print "   ", $$1 }' Makefile
+	@awk -F: '/^[a-z-]+:/ { print "   ", $$1 }' Makefile
 
 # Run all quick, local commands
 .PHONY: all
@@ -39,6 +39,13 @@ lint:
 pack:
 	cd tests/integration/charms/testdb && charmcraft pack
 	cd tests/integration/charms/testapp && charmcraft pack
+
+# Publish to TestPyPI
+.PHONY:
+publish-test:
+	rm -rf dist
+	uv build
+	uv publish --publish-url=https://test.pypi.org/legacy/ --token=$(UV_PUBLISH_TOKEN_TEST)
 
 # Check static types
 .PHONY: static
