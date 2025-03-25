@@ -1,5 +1,6 @@
 import pathlib
 
+import pytest
 import requests
 
 import jubilant
@@ -58,6 +59,22 @@ def test_config_and_run(juju: jubilant.Juju):
         'params': {'param1': 'value1'},
         'thingy': 'foo',
     }
+
+    with pytest.raises(jubilant.ActionError) as excinfo:
+        juju.run(charm + '/0', 'do-thing', {'error': 'ERR'})
+    result = excinfo.value.result
+    assert not result.success
+    assert result.status == 'failed'
+    assert result.return_code == 0  # return_code is 0 even if action fails
+    assert result.message == 'failed with error: ERR'
+
+    with pytest.raises(jubilant.ActionError) as excinfo:
+        juju.run(charm + '/0', 'do-thing', {'exception': 'EXC'})
+    result = excinfo.value.result
+    assert not result.success
+    assert result.status == 'failed'
+    assert result.return_code != 0
+    assert 'EXC' in result.stderr
 
 
 def test_integrate(juju: jubilant.Juju):
