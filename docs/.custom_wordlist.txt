@@ -1,17 +1,15 @@
 # Ensure the last line in this file has a newline at the end, to support concatenation
-AppStatus
 args
 CIDR
 CLI
 cli
 config
 Dataclasses
-favorite
 Jubilant
 Jubilant's
 libjuju
-Microk
-Microk8s
+MicroK
+MicroK8s
 PyPI
 pytest
 Pythonic
@@ -19,6 +17,5 @@ statustypes
 stdout
 stderr
 teardown
-UnitStatus
 URI
 websocket
