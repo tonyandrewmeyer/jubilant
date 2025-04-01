@@ -1,0 +1,40 @@
+name: TIOBE Quality Checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 7 1 * *'
+
+permissions: {}
+
+jobs:
+  TICS:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # This is setup for the TIOBE tool, not our execution.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+      - name: Install dependencies
+        run: pip install flake8 pylint
+
+      - name: Generate coverage report
+        run: |
+          mkdir -p .report
+          make unit
+          uvx coverage xml -o .report/coverage.xml
+
+      - name: TICS GitHub Action
+        uses: tiobe/tics-github-action@v3
+        with:
+          mode: qserver
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
+          project: jubilant
+          installTics: true
