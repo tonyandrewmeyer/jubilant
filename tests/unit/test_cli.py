@@ -17,7 +17,7 @@ def test_success(run: mocks.Run):
     assert stdout == 'bootstrapped\n'
 
 
-def test_logging(run: mocks.Run, caplog: pytest.LogCaptureFixture):
+def test_logging_normal(run: mocks.Run, caplog: pytest.LogCaptureFixture):
     run.handle(['juju', 'deploy', '--model', 'mdl', 'app1'])
     juju = jubilant.Juju(model='mdl')
     caplog.set_level(logging.INFO, logger='jubilant')
