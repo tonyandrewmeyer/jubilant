@@ -12,7 +12,7 @@ import time
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Union, overload
 
-from . import _yaml
+from . import _pretty, _yaml
 from ._task import Task
 from .statustypes import Status
 
@@ -654,7 +654,7 @@ class Juju:
             prev_status = status
             status = self.status()
             if status != prev_status:
-                logger.info('wait: status changed:\n%s', status)
+                logger.info('wait: status changed:\n%s', _status_diff(prev_status, status))
 
             if error is not None and error(status):
                 raise WaitError(f'error function {error.__qualname__} returned false\n{status}')
@@ -692,3 +692,26 @@ def _format_config(k: str, v: ConfigValue) -> str:
     if isinstance(v, bool):
         v = 'true' if v else 'false'
     return f'{k}={v}'
+
+
+def _status_diff(old: Status | None, new: Status) -> str:
+    """Return a line-based diff of two status objects."""
+    if old is None:
+        old_lines = []
+    else:
+        old_lines = [line for line in _pretty.gron(old) if _status_line_ok(line)]
+    new_lines = [line for line in _pretty.gron(new) if _status_line_ok(line)]
+    return '\n'.join(_pretty.diff(old_lines, new_lines))
+
+
+def _status_line_ok(line: str) -> bool:
+    """Return whether the status line should be included in the diff."""
+    # Exclude controller timestamp as it changes every update and is just noise.
+    field, _, _ = line.partition(' = ')
+    if field == '.controller.timestamp':
+        return False
+    # Exclude status-updated-since timestamps as they just add noise (and log lines already
+    # include timestamps).
+    if field.endswith('.since'):
+        return False
+    return True
