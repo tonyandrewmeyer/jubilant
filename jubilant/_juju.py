@@ -463,6 +463,31 @@ class Juju:
                 args.extend(['--via', ','.join(via)])
         self.cli(*args)
 
+    def offer(self, app: str, *endpoint: str, name: str | None = None) -> None:
+        """Offer application endpoints for use in other models.
+
+        Examples::
+
+            juju.offer('mysql', 'db')
+            juju.offer('mymodel.mysql', 'db', 'log', name='altname')
+
+        Args:
+            app: Application name to offer endpoints for.
+            endpoint: Endpoint or endpoints to offer.
+            name: Name of the offer. By default, the offer is named after the application.
+        """
+        if ':' in app:
+            raise TypeError('must provide endpoint in "endpoint" argument not in "app"')
+        if not endpoint:
+            raise TypeError('must provide at least one endpoint')
+
+        app_endpoint = app + ':' + ','.join(endpoint)
+        args = ['offer', app_endpoint]
+        if name is not None:
+            args.append(name)
+
+        self.cli(*args)
+
     def remove_application(
         self,
         *app: str,
