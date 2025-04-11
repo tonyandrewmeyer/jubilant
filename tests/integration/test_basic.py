@@ -27,6 +27,9 @@ def test_deploy(juju: jubilant.Juju):
     output = juju.ssh('snappass-test/0', 'ls', '/charm/container', container='redis')
     assert 'pebble' in output.split()
 
+    # Ensure refresh works (though it will already be up to date)
+    juju.refresh('snappass-test')
+
 
 def test_add_and_remove(juju: jubilant.Juju):
     charm = 'snappass-test'
