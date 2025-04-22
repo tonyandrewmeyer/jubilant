@@ -867,7 +867,7 @@ class Juju:
                     logger_wait.info('wait: status changed:\n%s', diff)
 
             if error is not None and error(status):
-                raise WaitError(f'error function {error.__qualname__} returned false\n{status}')
+                raise WaitError(f'error function {error.__qualname__} returned true\n{status}')
 
             if ready(status):
                 success_count += 1
