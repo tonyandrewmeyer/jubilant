@@ -40,6 +40,20 @@ class WaitError(Exception):
 class SecretURI(str):
     """A string subclass that represents a secret URI ("secret:...")."""
 
+    @property
+    def unique_identifier(self) -> str:
+        """Unique identifier of this secret URI.
+
+        This is the secret's globally-unique identifier (currently a 20-character Xid,
+        for example "9m4e2mr0ui3e8a215n4g").
+        """
+        if '/' in self:
+            return self.rsplit('/', maxsplit=1)[-1]
+        elif self.startswith('secret:'):
+            return self[len('secret:') :]
+        else:
+            return str(self)
+
 
 ConfigValue = Union[bool, int, float, str, SecretURI]
 """The possible types a charm config value can be."""
@@ -127,6 +141,33 @@ class Juju:
 
         self.cli(*args, include_model=False)
         self.model = model
+
+    def add_secret(
+        self,
+        name: str,
+        content: Mapping[str, str],
+        *,
+        info: str | None = None,
+    ) -> SecretURI:
+        """Add a new named secret and returns its secret URI.
+
+        Args:
+            name: Name for the secret.
+            content: Key-value pairs that represent the secret content, for example
+                ``{'password': 'hunter2'}``.
+            info: Optional description for the secret.
+        """
+        args = ['add-secret', name]
+        if info is not None:
+            args.extend(['--info', info])
+
+        with tempfile.NamedTemporaryFile('w+', dir=self._temp_dir) as file:
+            _yaml.safe_dump(content, file)
+            file.flush()
+            args.extend(['--file', file.name])
+            output = self.cli(*args)
+
+        return SecretURI(output.strip())
 
     def add_unit(
         self,
