@@ -48,8 +48,10 @@ class SecretURI(str):
         for example "9m4e2mr0ui3e8a215n4g").
         """
         if '/' in self:
+            # Handle 'secret://MODEL-UUID/UNIQUE-IDENTIFIER'
             return self.rsplit('/', maxsplit=1)[-1]
         elif self.startswith('secret:'):
+            # Handle common case of 'secret:UNIQUE-IDENTIFIER'
             return self[len('secret:') :]
         else:
             return str(self)
@@ -903,8 +905,12 @@ class Juju:
 
             juju = jubilant.Juju()
             juju.deploy('snappass-test')
+            juju.wait(jubilant.all_active)
+
+            # Or something more complex: wait specifically for 'snappass-test' to be active,
+            # and raise if any app or unit is seen in "error" status while waiting.
             juju.wait(
-                lambda status: status.apps['snappass-test'].is_active,
+                lambda status: jubilant.all_active(status, 'snappass-test'),
                 error=jubilant.any_error,
             )
 
