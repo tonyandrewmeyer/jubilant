@@ -69,11 +69,19 @@ def test_set_with_model(run: mocks.Run):
     assert retval is None
 
 
-def test_reset(run: mocks.Run):
+def test_reset_str(run: mocks.Run):
+    run.handle(['juju', 'model-config', '--reset', 'rst'])
+
+    juju = jubilant.Juju()
+    retval = juju.model_config(reset='rst')
+    assert retval is None
+
+
+def test_reset_list(run: mocks.Run):
     run.handle(['juju', 'model-config', '--reset', 'x,why,zed'])
 
     juju = jubilant.Juju()
-    retval = juju.model_config({'x': None, 'why': None, 'zed': None})
+    retval = juju.model_config(reset=['x', 'why', 'zed'])
     assert retval is None
 
 
@@ -81,5 +89,5 @@ def test_set_with_reset(run: mocks.Run):
     run.handle(['juju', 'model-config', 'foo=bar', '--reset', 'baz,buzz'])
 
     juju = jubilant.Juju()
-    retval = juju.model_config({'foo': 'bar', 'baz': None, 'buzz': None})
+    retval = juju.model_config({'foo': 'bar'}, reset=['baz', 'buzz'])
     assert retval is None
