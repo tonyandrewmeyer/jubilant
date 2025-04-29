@@ -18,8 +18,8 @@ def all_active(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested, and each must be present in ``status.apps``.
+        apps: If provided, only these applications (and their units) are tested. If an app is not
+            present in ``status.apps``, returns False.
     """
     return _all_statuses_are('active', status, apps)
 
@@ -31,8 +31,8 @@ def all_blocked(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested, and each must be present in ``status.apps``.
+        apps: If provided, only these applications (and their units) are tested. If an app is not
+            present in ``status.apps``, returns False.
     """
     return _all_statuses_are('blocked', status, apps)
 
@@ -44,8 +44,8 @@ def all_error(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested, and each must be present in ``status.apps``.
+        apps: If provided, only these applications (and their units) are tested. If an app is not
+            present in ``status.apps``, returns False.
     """
     return _all_statuses_are('error', status, apps)
 
@@ -57,8 +57,8 @@ def all_maintenance(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested, and each must be present in ``status.apps``.
+        apps: If provided, only these applications (and their units) are tested. If an app is not
+            present in ``status.apps``, returns False.
     """
     return _all_statuses_are('maintenance', status, apps)
 
@@ -70,8 +70,8 @@ def all_waiting(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested, and each must be present in ``status.apps``.
+        apps: If provided, only these applications (and their units) are tested. If an app is not
+            present in ``status.apps``, returns False.
     """
     return _all_statuses_are('waiting', status, apps)
 
@@ -83,8 +83,7 @@ def any_active(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested.
+        apps: If provided, only these applications (and their units) are tested.
     """
     return _any_status_is('active', status, apps)
 
@@ -96,8 +95,7 @@ def any_blocked(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested.
+        apps: If provided, only these applications (and their units) are tested.
     """
     return _any_status_is('blocked', status, apps)
 
@@ -118,8 +116,7 @@ def any_error(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested.
+        apps: If provided, only these applications (and their units) are tested.
     """
     return _any_status_is('error', status, apps)
 
@@ -131,8 +128,7 @@ def any_maintenance(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested.
+        apps: If provided, only these applications (and their units) are tested.
     """
     return _any_status_is('maintenance', status, apps)
 
@@ -144,15 +140,36 @@ def any_waiting(status: Status, *apps: str) -> bool:
 
     Args:
         status: The status object being tested.
-        apps: An optional list of application names. If provided, only these applications
-            (and their units) are tested.
+        apps: If provided, only these applications (and their units) are tested.
     """
     return _any_status_is('waiting', status, apps)
 
 
+def all_agents_idle(status: Status, *apps: str) -> bool:
+    """Report whether all unit agents in *status* (filtered to *apps* if provided) are "idle".
+
+    Unlike the other ``all_*`` and ``any_*`` helpers, this method looks at the status of each
+    Juju unit agent, not the workload's application or unit status.
+
+    Examples::
+
+        # Use the callable directly to wait for unit agents from all apps to be idle.
+        juju.wait(jubilant.all_agents_idle)
+
+        # Use a lambda to wait for unit agents only from specified apps (blog, mysql).
+        juju.wait(lambda status: jubilant.all_agents_idle(status, 'blog', 'mysql'))
+
+    Args:
+        status: The status object being tested.
+        apps: If provided, only the unit agents of units from these applications are tested.
+            If an app is not present in ``status.apps``, returns False.
+    """
+    return _all_agent_statuses_are('idle', status, apps)
+
+
 def _all_statuses_are(expected: str, status: Status, apps: Iterable[str]) -> bool:
     if not apps:
-        apps = status.apps.keys()
+        apps = status.apps
 
     for app in apps:
         app_info = status.apps.get(app)
@@ -168,7 +185,7 @@ def _all_statuses_are(expected: str, status: Status, apps: Iterable[str]) -> boo
 
 def _any_status_is(expected: str, status: Status, apps: Iterable[str]) -> bool:
     if not apps:
-        apps = status.apps.keys()
+        apps = status.apps
 
     for app in apps:
         app_info = status.apps.get(app)
@@ -180,3 +197,17 @@ def _any_status_is(expected: str, status: Status, apps: Iterable[str]) -> bool:
             if unit_info.workload_status.current == expected:
                 return True
     return False
+
+
+def _all_agent_statuses_are(expected: str, status: Status, apps: Iterable[str]) -> bool:
+    if not apps:
+        apps = status.apps
+
+    for app in apps:
+        app_info = status.apps.get(app)
+        if app_info is None:
+            return False
+        for unit_info in app_info.units.values():
+            if unit_info.juju_status.current != expected:
+                return False
+    return True
