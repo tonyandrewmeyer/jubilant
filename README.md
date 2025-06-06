@@ -4,9 +4,7 @@ Jubilant is a Python library that wraps the [Juju](https://juju.is/) CLI for use
 
 You should consider switching to Jubilant if your integration tests currently use [pytest-operator](https://github.com/charmed-kubernetes/pytest-operator) (and they probably do). Jubilant has an API you'll pick up quickly, and it avoids some of the pain points of [python-libjuju](https://github.com/juju/python-libjuju/), such as websocket failures and having to use `async`. Read our [design goals](https://canonical-jubilant.readthedocs-hosted.com/explanation/design-goals).
 
-Jubilant requires Python 3.12 or above. If your charm uses an Ubuntu base with an older Python version, run your integration tests with Python 3.12+ and install Jubilant with the requirement `jubilant;python_version>='3.12'` ([see an example](https://github.com/jnsgruk/zinc-k8s-operator/pull/355/files)).
-
-Jubilant is currently in pre-release or "beta" phase (see [PyPI releases](https://pypi.org/project/jubilant/#history)). Our intention is to release version 1.0.0 in May 2025.
+Jubilant 1.0.0 was released in April 2025. We will try our best to avoid making breaking changes to the API after this point.
 
 [**Read the full documentation**](https://canonical-jubilant.readthedocs-hosted.com/)
 
@@ -21,7 +19,7 @@ $ pip install jubilant
 $ uv add jubilant
 ```
 
-Because Jubilant calls the Juju CLI, you'll also need to [install Juju](https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-juju/#install-juju).
+Because Jubilant calls the Juju CLI, you'll also need to [install Juju](https://documentation.ubuntu.com/juju/3.6/howto/manage-juju/index.html#install-juju).
 
 To use Jubilant in Python code:
 
@@ -31,6 +29,9 @@ import jubilant
 juju = jubilant.Juju()
 juju.deploy('snappass-test')
 juju.wait(jubilant.all_active)
+
+# Or only wait for specific applications:
+juju.wait(lambda status: jubilant.all_active(status, 'snappass-test', 'another-app'))
 ```
 
 Below is an example of a charm integration test. First we define a module-scoped [pytest fixture](https://docs.pytest.org/en/stable/explanation/fixtures.html) named `juju` which creates a temporary model and runs the test with a `Juju` instance pointing at that model. Jubilant's`temp_model` context manager creates the model during test setup and destroys it during teardown:

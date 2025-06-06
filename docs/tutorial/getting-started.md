@@ -2,7 +2,7 @@
 
 In this tutorial, we'll learn how to install Jubilant, use it to run Juju commands, and write a simple charm integration test.
 
-The tutorial assumes that you have a basic understanding of Juju and have already installed it. [Learn how to install the Juju CLI.](https://canonical-juju.readthedocs-hosted.com/en/latest/user/howto/manage-juju/#install-juju)
+The tutorial assumes that you have a basic understanding of Juju and have already installed it. [Learn how to install the Juju CLI.](https://documentation.ubuntu.com/juju/3.6/howto/manage-juju/index.html#install-juju)
 
 
 ## Install Jubilant
@@ -15,7 +15,7 @@ $ pip install jubilant
 $ uv add jubilant
 ```
 
-Jubilant requires Python 3.12 or above. If your charm uses an Ubuntu base with an older Python version, run your integration tests with Python 3.12+ and install Jubilant with the requirement `jubilant;python_version>='3.12'` ([see an example](https://github.com/jnsgruk/zinc-k8s-operator/pull/355/files)).
+Like the [Ops](https://github.com/canonical/operator) framework used by charms, Jubilant requires Python 3.8 or above.
 
 
 ## Check your setup
@@ -76,8 +76,10 @@ Integration tests in a test file would use the fixture, operating on the tempora
 ```python
 def test_deploy(juju: jubilant.Juju):
     juju.deploy('snappass-test')
-    status = juju.wait(jubilant.all_active)
-    assert status.apps['snappass-test'].scale == 1
+    juju.wait(jubilant.all_active)
+
+    # Or wait for just 'snappass-test' to be active (ignoring other apps):
+    juju.wait(lambda status: jubilant.all_active(status, 'snappass-test'))
 ```
 
 You may want to adjust the [scope](https://docs.pytest.org/en/stable/how-to/fixtures.html#fixture-scopes) of your `juju` fixture. For example, to create a new model for every test function (pytest's default behavior), omit the scope:
@@ -93,9 +95,22 @@ def juju():
 
 When waiting on a condition with [`Juju.wait`](jubilant.Juju.wait), you can use pre-defined helpers including [](jubilant.all_active) and [](jubilant.any_error). You can also define custom conditions for the *ready* and *error* parameters. This is typically done with inline `lambda` functions.
 
-For example, to test that the `myapp` charm starts up with application status "unknown":
+For example, to deploy and wait till all the specified applications (`blog`, `mysql`, and `redis`) are "active":
 
+```python
+def test_active_apps(juju: jubilant.Juju):
+    for app in ['blog', 'mysql', 'redis']:
+        juju.deploy(app)
+    juju.integrate('blog', 'mysql')
+    juju.integrate('blog', 'redis')
+    juju.wait(
+        lambda status: jubilant.all_active(status, 'blog', 'mysql', 'redis'),
+    )
 ```
+
+Or to test that the `myapp` charm starts up with application status "unknown":
+
+```python
 def test_unknown(juju: jubilant.Juju):
     juju.deploy('myapp')
     juju.wait(
@@ -103,11 +118,11 @@ def test_unknown(juju: jubilant.Juju):
     )
 ```
 
-There are also `is_*` properties on the [`AppStatus`](jubilant.statustypes.AppStatus) and [`UnitStatus`](jubilant.statustypes.UnitStatus) classes for the common statuses: `is_active`, `is_blocked`, `is_error`, `is_maintenance`, and `is_waiting`.
+There are also `is_*` properties on the [`AppStatus`](jubilant.statustypes.AppStatus) and [`UnitStatus`](jubilant.statustypes.UnitStatus) classes for the common statuses: `is_active`, `is_blocked`, `is_error`, `is_maintenance`, and `is_waiting`. These test the status of a single application or unit, whereas the `jubilant.all_*` and `jubilant.any_*` functions test the statuses of multiple applications *and* all their units.
 
 For example, to wait till `myapp` is active and `yourapp` is blocked, and to raise an error if any app or unit goes into error state:
 
-```
+```python
 def test_custom_wait(juju: jubilant.Juju):
     juju.deploy('myapp')
     juju.deploy('yourapp')
@@ -175,7 +190,7 @@ We recommend using [concierge](https://github.com/jnsgruk/concierge/) to set up 
 You've now learned the basics of Jubilant! To learn more:
 
 - Look over the [`jubilant` API reference](/reference/jubilant)
-- See [Jubilant's own integration tests](https://github.com/canonical/jubilant/blob/main/tests/integration/test_basic.py) for more examples of using `Juju` methods
+- See [Jubilant's own integration tests](https://github.com/canonical/jubilant/tree/main/tests/integration) for more examples of using `Juju` methods
 - See [Jubilant's `conftest.py`](https://github.com/canonical/jubilant/blob/main/tests/integration/conftest.py) with a `juju` fixture that has a `--keep-models` command-line argument, and prints the `juju debug-log` on test failure
 
 If you have any problems or want to request new features, please [open an issue](https://github.com/canonical/jubilant/issues/new).

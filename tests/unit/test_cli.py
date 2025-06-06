@@ -17,7 +17,7 @@ def test_success(run: mocks.Run):
     assert stdout == 'bootstrapped\n'
 
 
-def test_logging(run: mocks.Run, caplog: pytest.LogCaptureFixture):
+def test_logging_normal(run: mocks.Run, caplog: pytest.LogCaptureFixture):
     run.handle(['juju', 'deploy', '--model', 'mdl', 'app1'])
     juju = jubilant.Juju(model='mdl')
     caplog.set_level(logging.INFO, logger='jubilant')
@@ -79,3 +79,13 @@ def test_exclude_model_with_model(run: mocks.Run):
     stdout = juju.cli('test', include_model=False)
 
     assert stdout == 'OUT'
+
+
+def test_stdin(run: mocks.Run):
+    run.handle(['juju', 'ssh', 'mysql/0', 'pg_restore ...'], stdout='restored\n')
+    juju = jubilant.Juju()
+
+    stdout = juju.cli('ssh', 'mysql/0', 'pg_restore ...', stdin='PASSWORD')
+
+    assert stdout == 'restored\n'
+    assert run.calls[0].stdin == 'PASSWORD'

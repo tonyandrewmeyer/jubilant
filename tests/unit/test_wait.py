@@ -22,15 +22,21 @@ def test_ready_normal(run: mocks.Run, time: mocks.Time):
 def test_logging(run: mocks.Run, time: mocks.Time, caplog: pytest.LogCaptureFixture):
     run.handle(['juju', 'status', '--format', 'json'], stdout=MINIMAL_JSON)
     juju = jubilant.Juju()
-    caplog.set_level(logging.INFO, logger='jubilant')
+    caplog.set_level(logging.INFO, logger='jubilant.wait')
 
     juju.wait(lambda _: True)
 
-    logs = [r for r in caplog.records if r.msg.startswith('wait:')]
-    assert len(logs) == 1  # only logs on first call or when status changes
-    message = logs[0].getMessage()
-    assert 'status changed' in message
-    assert 'mdl' in message
+    assert len(caplog.records) == 1  # only logs on first call or when status changes
+    message = caplog.records[0].getMessage()
+    assert (
+        message
+        == """wait: status changed:
++ .model.name = 'mdl'
++ .model.type = 'typ'
++ .model.controller = 'ctl'
++ .model.cloud = 'aws'
++ .model.version = '3.0.0'"""
+    )
 
 
 def test_with_model(run: mocks.Run, time: mocks.Time):
@@ -84,8 +90,7 @@ def test_error(run: mocks.Run, time: mocks.Time):
 
     assert len(run.calls) == 1
     assert time.monotonic() == 0
-    status_str = excinfo.value.__notes__[0]
-    assert 'mdl' in status_str
+    assert 'mdl' in str(excinfo.value)
 
 
 def test_timeout_default(run: mocks.Run, time: mocks.Time):
@@ -97,8 +102,7 @@ def test_timeout_default(run: mocks.Run, time: mocks.Time):
 
     assert len(run.calls) == 180
     assert time.monotonic() == 180
-    status_str = excinfo.value.__notes__[0]
-    assert 'mdl' in status_str
+    assert 'mdl' in str(excinfo.value)
 
 
 def test_timeout_override(run: mocks.Run, time: mocks.Time):
@@ -110,5 +114,14 @@ def test_timeout_override(run: mocks.Run, time: mocks.Time):
 
     assert len(run.calls) == 5
     assert time.monotonic() == 5
-    status_str = excinfo.value.__notes__[0]
-    assert 'mdl' in status_str
+    assert 'mdl' in str(excinfo.value)
+
+
+def test_timeout_zero(time: mocks.Time):
+    juju = jubilant.Juju()
+
+    with pytest.raises(TimeoutError) as excinfo:
+        juju.wait(lambda _: False, timeout=0)
+
+    assert time.monotonic() == 0
+    assert 'mdl' not in str(excinfo.value)

@@ -1,9 +1,9 @@
 """Jubilant is a Pythonic wrapper around the Juju CLI for writing charm integration tests."""
 
 from . import statustypes
-from ._actions import ActionError, ActionResult
 from ._all_any import (
     all_active,
+    all_agents_idle,
     all_blocked,
     all_error,
     all_maintenance,
@@ -15,19 +15,21 @@ from ._all_any import (
     any_waiting,
 )
 from ._juju import CLIError, ConfigValue, Juju, SecretURI, WaitError
+from ._task import Task, TaskError
 from ._test_helpers import temp_model
 from .statustypes import Status
 
 __all__ = [
-    'ActionError',
-    'ActionResult',
     'CLIError',
     'ConfigValue',
     'Juju',
     'SecretURI',
     'Status',
+    'Task',
+    'TaskError',
     'WaitError',
     'all_active',
+    'all_agents_idle',
     'all_blocked',
     'all_error',
     'all_maintenance',
@@ -41,4 +43,4 @@ __all__ = [
     'temp_model',
 ]
 
-__version__ = '0.1.0'
+__version__ = '1.1.1'

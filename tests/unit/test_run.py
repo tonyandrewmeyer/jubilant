@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os.path
 import subprocess
 from typing import Any
@@ -33,12 +35,11 @@ def test_completed(run: mocks.Run):
     run.handle(['juju', 'run', '--format', 'json', 'mysql/0', 'get-password'], stdout=out_json)
     juju = jubilant.Juju()
 
-    result = juju.run('mysql/0', 'get-password')
+    task = juju.run('mysql/0', 'get-password')
 
-    assert result == jubilant.ActionResult(
-        success=True,
+    assert task == jubilant.Task(
+        id='42',
         status='completed',
-        task_id='42',
         results={'username': 'user', 'password': 'pass'},
         return_code=0,
         stdout='OUT',
@@ -48,6 +49,7 @@ def test_completed(run: mocks.Run):
             '2025-03-01 16:23:26 +1300 NZDT Another message',
         ],
     )
+    assert task.success
 
 
 def test_not_found(run: mocks.Run):
@@ -75,17 +77,17 @@ def test_failure(run: mocks.Run):
     run.handle(['juju', 'run', '--format', 'json', 'mysql/0', 'faily'], stdout=out_json)
     juju = jubilant.Juju()
 
-    with pytest.raises(jubilant.ActionError) as excinfo:
+    with pytest.raises(jubilant.TaskError) as excinfo:
         juju.run('mysql/0', 'faily')
 
-    assert excinfo.value.result == jubilant.ActionResult(
-        success=False,
+    assert excinfo.value.task == jubilant.Task(
+        id='42',
         status='failed',  # This is what causes the failure (even when return_code is 0)
-        task_id='42',
         results={'foo': 'bar'},
         return_code=0,
         message='Failure message',
     )
+    assert not excinfo.value.task.success
 
 
 def test_exception_task_failed(run: mocks.Run):
@@ -110,17 +112,17 @@ def test_exception_task_failed(run: mocks.Run):
     )
     juju = jubilant.Juju()
 
-    with pytest.raises(jubilant.ActionError) as excinfo:
+    with pytest.raises(jubilant.TaskError) as excinfo:
         juju.run('mysql/0', 'exceptiony')
 
-    assert excinfo.value.result == jubilant.ActionResult(
-        success=False,
+    assert excinfo.value.task == jubilant.Task(
+        id='42',
         status='failed',
-        task_id='42',
         results={'foo': 'bar'},
         return_code=1,
         stderr='Uncaught Exception in charm code: thing happened...',
     )
+    assert not excinfo.value.task.success
 
 
 def test_exception_other(run: mocks.Run):
@@ -140,6 +142,19 @@ def test_exception_other(run: mocks.Run):
     assert excinfo.value.stderr == 'ERR'
 
 
+def test_wait_timeout(run: mocks.Run):
+    run.handle(
+        ['juju', 'run', '--format', 'json', 'mysql/0', 'do-thing', '--wait', '0.001s'],
+        returncode=1,
+        stdout='OUT',
+        stderr='... timed out ...',
+    )
+    juju = jubilant.Juju()
+
+    with pytest.raises(TimeoutError):
+        juju.run('mysql/0', 'do-thing', wait=0.001)
+
+
 @pytest.mark.parametrize('cli_binary', ['/snap/bin/juju', '/bin/juju'])
 def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
     stdout = """
@@ -154,11 +169,12 @@ def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
     "status": "completed"
   }
 }"""
-    params_path = ''
+    params_path = None
 
     def mock_run(args: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
         nonlocal params_path
-        assert args[:-1] == [
+        *most_args, params_path = args
+        assert most_args == [
             cli_binary,
             'run',
             '--format',
@@ -167,7 +183,6 @@ def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
             'get-password',
             '--params',
         ]
-        (params_path,) = args[-1:]  # Ensure there's no extra args
         with open(params_path) as f:
             params = yaml.safe_load(f)
         assert params == {'foo': 1, 'bar': ['ab', 'cd']}
@@ -176,13 +191,13 @@ def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
     monkeypatch.setattr('subprocess.run', mock_run)
     juju = jubilant.Juju(cli_binary=cli_binary)
 
-    result = juju.run('mysql/0', 'get-password', {'foo': 1, 'bar': ['ab', 'cd']})
+    task = juju.run('mysql/0', 'get-password', {'foo': 1, 'bar': ['ab', 'cd']})
 
-    assert result == jubilant.ActionResult(
-        success=True,
+    assert task == jubilant.Task(
+        id='42',
         status='completed',
-        task_id='42',
         results={'username': 'user', 'password': 'pass'},
     )
-    assert params_path
+    assert task.success
+    assert params_path is not None
     assert not os.path.exists(params_path)

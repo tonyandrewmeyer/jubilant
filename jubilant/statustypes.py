@@ -25,7 +25,6 @@ __all__ = [
     'RemoteAppStatus',
     'RemoteEndpoint',
     'Status',
-    'StatusError',
     'StatusInfo',
     'StorageAttachments',
     'StorageInfo',
@@ -37,11 +36,7 @@ __all__ = [
 ]
 
 
-class StatusError(Exception):
-    """Raised when ``juju status`` returns a status-error for certain types."""
-
-
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class FormattedBase:
     name: str
     channel: str
@@ -54,7 +49,7 @@ class FormattedBase:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class StatusInfo:
     current: str = ''
     message: str = ''
@@ -66,7 +61,7 @@ class StatusInfo:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> StatusInfo:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(current='failed', message=d['status-error'])
         return cls(
             current=d.get('current') or '',
             message=d.get('message') or '',
@@ -77,7 +72,7 @@ class StatusInfo:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class AppStatusRelation:
     related_app: str = ''
     interface: str = ''
@@ -92,7 +87,7 @@ class AppStatusRelation:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class UnitStatus:
     workload_status: StatusInfo = dataclasses.field(default_factory=StatusInfo)
     juju_status: StatusInfo = dataclasses.field(default_factory=StatusInfo)
@@ -108,7 +103,10 @@ class UnitStatus:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> UnitStatus:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(
+                workload_status=StatusInfo(current='failed', message=d['status-error']),
+                juju_status=StatusInfo(current='failed', message=d['status-error']),
+            )
         return cls(
             workload_status=(
                 StatusInfo._from_dict(d['workload-status'])
@@ -158,7 +156,7 @@ class UnitStatus:
         return self.workload_status.current == 'waiting'
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class AppStatus:
     charm: str
     charm_origin: str
@@ -185,7 +183,14 @@ class AppStatus:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> AppStatus:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(
+                charm='<failed>',
+                charm_origin='<failed>',
+                charm_name='<failed>',
+                charm_rev=-1,
+                exposed=False,
+                app_status=StatusInfo(current='failed', message=d['status-error']),
+            )
         return cls(
             charm=d['charm'],
             charm_origin=d['charm-origin'],
@@ -250,7 +255,7 @@ class AppStatus:
         return self.app_status.current == 'waiting'
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class EntityStatus:
     current: str = ''
     message: str = ''
@@ -265,7 +270,7 @@ class EntityStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class UnitStorageAttachment:
     machine: str = ''
     location: str = ''
@@ -280,7 +285,7 @@ class UnitStorageAttachment:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class StorageAttachments:
     units: dict[str, UnitStorageAttachment]
 
@@ -291,7 +296,7 @@ class StorageAttachments:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class StorageInfo:
     kind: str
     status: EntityStatus
@@ -313,7 +318,7 @@ class StorageInfo:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class FilesystemAttachment:
     mount_point: str
     read_only: bool
@@ -329,7 +334,7 @@ class FilesystemAttachment:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class FilesystemAttachments:
     machines: dict[str, FilesystemAttachment] = dataclasses.field(default_factory=dict)
     containers: dict[str, FilesystemAttachment] = dataclasses.field(default_factory=dict)
@@ -356,7 +361,7 @@ class FilesystemAttachments:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class FilesystemInfo:
     size: int
 
@@ -386,7 +391,7 @@ class FilesystemInfo:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class VolumeAttachment:
     read_only: bool
 
@@ -406,7 +411,7 @@ class VolumeAttachment:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class VolumeAttachments:
     machines: dict[str, VolumeAttachment] = dataclasses.field(default_factory=dict)
     containers: dict[str, VolumeAttachment] = dataclasses.field(default_factory=dict)
@@ -433,7 +438,7 @@ class VolumeAttachments:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class VolumeInfo:
     size: int
     persistent: bool
@@ -467,7 +472,7 @@ class VolumeInfo:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class CombinedStorage:
     storage: dict[str, StorageInfo] = dataclasses.field(default_factory=dict)
     filesystems: dict[str, FilesystemInfo] = dataclasses.field(default_factory=dict)
@@ -494,7 +499,7 @@ class CombinedStorage:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class ControllerStatus:
     timestamp: str = ''
 
@@ -505,7 +510,7 @@ class ControllerStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class LxdProfileContents:
     config: dict[str, str]
     description: str
@@ -520,7 +525,7 @@ class LxdProfileContents:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class NetworkInterface:
     ip_addresses: list[str]
     mac_address: str
@@ -542,7 +547,7 @@ class NetworkInterface:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class MachineStatus:
     juju_status: StatusInfo = dataclasses.field(default_factory=StatusInfo)
     hostname: str = ''
@@ -564,7 +569,10 @@ class MachineStatus:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> MachineStatus:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(
+                juju_status=StatusInfo(current='failed', message=d['status-error']),
+                machine_status=StatusInfo(current='failed', message=d['status-error']),
+            )
         return cls(
             juju_status=(
                 StatusInfo._from_dict(d['juju-status']) if 'juju-status' in d else StatusInfo()
@@ -607,7 +615,7 @@ class MachineStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class ModelStatus:
     name: str
     type: str
@@ -635,7 +643,7 @@ class ModelStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class RemoteEndpoint:
     interface: str
     role: str
@@ -648,7 +656,7 @@ class RemoteEndpoint:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class OfferStatus:
     app: str
     endpoints: dict[str, RemoteEndpoint]
@@ -660,7 +668,7 @@ class OfferStatus:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> OfferStatus:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(app=f'<failed> ({d["status-error"]})', endpoints={})
         return cls(
             app=d['application'],
             endpoints={k: RemoteEndpoint._from_dict(v) for k, v in d['endpoints'].items()},
@@ -670,7 +678,7 @@ class OfferStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class RemoteAppStatus:
     url: str
 
@@ -682,7 +690,10 @@ class RemoteAppStatus:
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> RemoteAppStatus:
         if 'status-error' in d:
-            raise StatusError(d['status-error'])
+            return cls(
+                url='<failed>',
+                app_status=StatusInfo(current='failed', message=d['status-error']),
+            )
         return cls(
             url=d['url'],
             endpoints=(
@@ -700,7 +711,7 @@ class RemoteAppStatus:
         )
 
 
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True)
 class Status:
     """Parsed version of the status object returned by ``juju status --format=json``."""
 
@@ -739,11 +750,11 @@ class Status:
             ),
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a pretty-printed version of the status."""
-        return _pretty._dump(self)
+        return _pretty.dump(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a pretty-printed version of the status."""
         return repr(self)
 

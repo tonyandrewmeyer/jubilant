@@ -1,58 +1,47 @@
 
-.PHONY: help
-help:
+# We're using Make as a command runner, so always make (avoids need for .PHONY)
+MAKEFLAGS += --always-make
+
+help:  # Display help
 	@echo "Usage: make [target] [ARGS='additional args']\n\nTargets:"
-	@awk -F: '/^[a-z-]+:/ { print "   ", $$1 }' Makefile
+	@awk -F'#' '/^[a-z-]+:/ { sub(":.*", "", $$1); print " ", $$1, "#", $$2 }' Makefile | column -t -s '#'
 
-# Run all quick, local commands
-.PHONY: all
-all: format lint static unit
+all: format lint static unit  # Run all quick, local commands
 
-# Build documentation
-.PHONY: docs
-docs:
-	$(MAKE) -C docs run
+coverage-html:  # Write and open HTML coverage report from last unit test run
+	uv run coverage html
+	open htmlcov/index.html 2>/dev/null
 
-# Fix linting issues
-.PHONY: fix
-fix:
+docs:  # Build documentation
+	MAKEFLAGS='' $(MAKE) -C docs run
+
+fix:  # Fix linting issues
 	uv run ruff check --fix
 
-# Format the Python code
-.PHONY: format
-format:
+format:  # Format the Python code
 	uv run ruff format
 
-# Run integration tests (slow, require real Juju)
-.PHONY: integration
-integration:
-	uv run pytest tests/integration -vv --log-level=INFO --log-format="%(asctime)s %(levelname)s %(message)s" $(ARGS)
+integration-k8s:  # Run K8s integration tests on Juju, eg: make integration ARGS='-k test_deploy'
+	uv run pytest tests/integration -vv --log-level=INFO --log-format="%(asctime)s %(levelname)s %(message)s" -m 'not machine' $(ARGS)
 
-# Perform linting
-.PHONY: lint
-lint:
+integration-machine:  # Run machine integration tests on Juju, eg: make integration-machine ARGS='-k test_ssh'
+	uv run pytest tests/integration -vv --log-level=INFO --log-format="%(asctime)s %(levelname)s %(message)s" -m machine $(ARGS)
+
+lint:  # Perform linting
 	uv run ruff check
 	uv run ruff format --diff
 
-# Pack charms used by integration tests (requires charmcraft)
-.PHONY: pack
-pack:
+pack:  # Pack charms used by integration tests (requires charmcraft)
 	cd tests/integration/charms/testdb && charmcraft pack
 	cd tests/integration/charms/testapp && charmcraft pack
 
-# Publish to TestPyPI
-.PHONY:
-publish-test:
+publish-test:  # Publish to TestPyPI
 	rm -rf dist
 	uv build
 	uv publish --publish-url=https://test.pypi.org/legacy/ --token=$(UV_PUBLISH_TOKEN_TEST)
 
-# Check static types
-.PHONY: static
-static:
+static:  # Check static types
 	uv run pyright
 
-# Run quick unit tests
-.PHONY: unit
-unit:
+unit:  # Run unit tests, eg: make unit ARGS='tests/unit/test_deploy.py'
 	uv run pytest tests/unit -vv --cov=jubilant $(ARGS)

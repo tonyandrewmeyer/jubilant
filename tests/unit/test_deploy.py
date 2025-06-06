@@ -1,3 +1,5 @@
+import pathlib
+
 import jubilant
 
 from . import mocks
@@ -28,6 +30,8 @@ def test_all_args(run: mocks.Run):
             'stg',
             '--base',
             'ubuntu@22.04',
+            '--bind',
+            'end1=space1 end2=space2',
             '--channel',
             'latest/edge',
             '--config',
@@ -59,6 +63,7 @@ def test_all_args(run: mocks.Run):
         'app',
         attach_storage='stg',
         base='ubuntu@22.04',
+        bind={'end1': 'space1', 'end2': 'space2'},
         channel='latest/edge',
         config={'x': True, 'y': 1, 'z': 'ss'},
         constraints={'mem': '8G'},
@@ -72,8 +77,22 @@ def test_all_args(run: mocks.Run):
     )
 
 
+def test_bind_str(run: mocks.Run):
+    run.handle(['juju', 'deploy', 'charm', '--bind', 'binding'])
+    juju = jubilant.Juju()
+
+    juju.deploy('charm', bind='binding')
+
+
 def test_list_args(run: mocks.Run):
     run.handle(['juju', 'deploy', 'charm', '--attach-storage', 'stg1,stg2', '--to', 'to1,to2'])
     juju = jubilant.Juju()
 
     juju.deploy('charm', attach_storage=['stg1', 'stg2'], to=['to1', 'to2'])
+
+
+def test_path(run: mocks.Run):
+    run.handle(['juju', 'deploy', 'xyz'])
+    juju = jubilant.Juju()
+
+    juju.deploy(pathlib.Path('xyz'))
