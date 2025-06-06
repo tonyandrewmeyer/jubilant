@@ -1,4 +1,4 @@
-name: TIOBE Quality Checks
+name: TIOBE
 
 on:
   workflow_dispatch:
