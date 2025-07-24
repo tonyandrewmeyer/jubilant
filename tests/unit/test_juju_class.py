@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import jubilant
 
 
@@ -44,3 +46,17 @@ def test_method_order():
     sorted_by_alpha = sorted(method_linenos)
     sorted_by_lines = sorted(method_linenos, key=lambda k: method_linenos[k])
     assert sorted_by_lines == sorted_by_alpha, 'Please keep Juju methods in alphabetical order'
+
+
+def test_default_tempdir(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('shutil.which', lambda _: '/bin/juju')  # type: ignore
+    juju = jubilant.Juju()
+
+    assert 'snap' not in juju._temp_dir
+
+
+def test_snap_tempdir(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('shutil.which', lambda _: '/snap/bin/juju')  # type: ignore
+    juju = jubilant.Juju()
+
+    assert 'snap' in juju._temp_dir

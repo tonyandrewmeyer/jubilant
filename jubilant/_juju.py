@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import json
 import logging
@@ -846,14 +847,16 @@ class Juju:
         if wait is not None:
             args.extend(['--wait', f'{wait}s'])
 
-        params_file = None
-        if params is not None:
-            with tempfile.NamedTemporaryFile(
-                'w+', delete=False, dir=self._temp_dir
-            ) as params_file:
+        with (
+            tempfile.NamedTemporaryFile('w+', dir=self._temp_dir)
+            if params is not None
+            else contextlib.nullcontext()
+        ) as params_file:
+            # params_file is defined when params is not None
+            if params_file is not None:
                 _yaml.safe_dump(params, params_file)
-            args.extend(['--params', params_file.name])
-        try:
+                params_file.flush()
+                args.extend(['--params', params_file.name])
             try:
                 stdout, stderr = self._cli(*args)
             except CLIError as exc:
@@ -875,9 +878,6 @@ class Juju:
             task = Task._from_dict(all_tasks[unit])
             task.raise_on_failure()
             return task
-        finally:
-            if params_file is not None:
-                os.remove(params_file.name)
 
     def scp(
         self,

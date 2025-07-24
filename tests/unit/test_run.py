@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import os.path
-import subprocess
-from typing import Any
-
 import pytest
 import yaml
 
@@ -155,8 +151,7 @@ def test_wait_timeout(run: mocks.Run):
         juju.run('mysql/0', 'do-thing', wait=0.001)
 
 
-@pytest.mark.parametrize('cli_binary', ['/snap/bin/juju', '/bin/juju'])
-def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
+def test_params(run: mocks.Run, mock_file: mocks.NamedTemporaryFile):
     stdout = """
 {
   "mysql/0": {
@@ -169,27 +164,11 @@ def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
     "status": "completed"
   }
 }"""
-    params_path = None
-
-    def mock_run(args: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
-        nonlocal params_path
-        *most_args, params_path = args
-        assert most_args == [
-            cli_binary,
-            'run',
-            '--format',
-            'json',
-            'mysql/0',
-            'get-password',
-            '--params',
-        ]
-        with open(params_path) as f:
-            params = yaml.safe_load(f)
-        assert params == {'foo': 1, 'bar': ['ab', 'cd']}
-        return subprocess.CompletedProcess(args=args, returncode=0, stdout=stdout)
-
-    monkeypatch.setattr('subprocess.run', mock_run)
-    juju = jubilant.Juju(cli_binary=cli_binary)
+    run.handle(
+        ['juju', 'run', '--format', 'json', 'mysql/0', 'get-password', '--params', mock_file.name],
+        stdout=stdout,
+    )
+    juju = jubilant.Juju()
 
     task = juju.run('mysql/0', 'get-password', {'foo': 1, 'bar': ['ab', 'cd']})
 
@@ -199,5 +178,5 @@ def test_params(monkeypatch: pytest.MonkeyPatch, cli_binary: str):
         results={'username': 'user', 'password': 'pass'},
     )
     assert task.success
-    assert params_path is not None
-    assert not os.path.exists(params_path)
+    assert yaml.safe_load('\n'.join(mock_file.writes)) == {'foo': 1, 'bar': ['ab', 'cd']}
+    assert mock_file.num_flushes == 1
