@@ -8,7 +8,7 @@ clients:
 
 
 artifacts:
-  - name: 'ops'
+  - name: 'jubilant'
     type: 'sdist'
     compression: 'gz'
     ssdlc_params:
