@@ -7,3 +7,5 @@ jubilant.egg-info
 *.charm
 # sbomber tool
 .statefile.yaml
+pkgs/
+reports/
