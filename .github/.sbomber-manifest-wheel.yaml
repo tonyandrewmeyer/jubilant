@@ -13,4 +13,5 @@ artifacts:
     ssdlc_params:
         name: 'jubilant'
         channel: 'stable'
+        version: ''
         cycle: '25.10'

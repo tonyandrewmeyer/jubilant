@@ -5,3 +5,5 @@ jubilant.egg-info
 .coverage
 .report
 *.charm
+# sbomber tool
+.statefile.yaml
