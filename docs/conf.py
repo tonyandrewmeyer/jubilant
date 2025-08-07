@@ -171,10 +171,35 @@ html_context = {
 slug = 'jubilant'
 
 
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+
+# Base URL of RTD hosted project
+
+html_baseurl = 'https://documentation.ubuntu.com/jubilant/'
+
+# URL scheme. Add language and version scheme elements.
+# When configured with RTD variables, check for RTD environment so manual runs succeed:
+
+sitemap_url_scheme = '{link}'
+
+# Include `lastmod` dates in the sitemap:
+
+sitemap_show_lastmod = True
+
+# Exclude generated pages from the sitemap:
+
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'py-modindex/',
+    'search/',
+]
+
+
 # Template and asset locations
 
-html_static_path = [".sphinx/_static"]
-templates_path = [".sphinx/_templates"]
+html_static_path = ["_static"]
+templates_path = ["_templates"]
 
 
 #############
@@ -251,6 +276,7 @@ extensions = [
     "sphinx_last_updated_by_git",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx_sitemap",
     "sphinx.ext.napoleon",
 ]
 
@@ -262,9 +288,7 @@ exclude_patterns = [
 
 # Adds custom CSS files, located under 'html_static_path'
 
-html_css_files = [
-    "css/pdf.css",
-]
+# html_css_files = []
 
 
 # Adds custom JavaScript files, located under 'html_static_path'
