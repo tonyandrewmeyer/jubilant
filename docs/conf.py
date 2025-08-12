@@ -74,7 +74,7 @@ copyright = "%s, %s" % (datetime.date.today().year, author)
 # NOTE: The Open Graph Protocol (OGP) enhances page display in a social graph
 #       and is used by social media platforms; see https://ogp.me/
 
-ogp_site_url = "https://canonical-jubilant.readthedocs-hosted.com/"
+ogp_site_url = "https://documentation.ubuntu.com/jubilant/"
 
 
 # Preview name of the documentation website
@@ -168,13 +168,38 @@ html_context = {
 # TODO: If your documentation is hosted on https://docs.ubuntu.com/,
 #       uncomment and update as needed.
 
-# slug = ''
+slug = 'jubilant'
+
+
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+
+# Base URL of RTD hosted project
+
+html_baseurl = 'https://documentation.ubuntu.com/jubilant/'
+
+# URL scheme. Add language and version scheme elements.
+# When configured with RTD variables, check for RTD environment so manual runs succeed:
+
+sitemap_url_scheme = '{link}'
+
+# Include `lastmod` dates in the sitemap:
+
+sitemap_show_lastmod = True
+
+# Exclude generated pages from the sitemap:
+
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'py-modindex/',
+    'search/',
+]
 
 
 # Template and asset locations
 
-html_static_path = [".sphinx/_static"]
-templates_path = [".sphinx/_templates"]
+html_static_path = ["_static"]
+templates_path = ["_templates"]
 
 
 #############
@@ -250,6 +275,8 @@ extensions = [
     "sphinxcontrib.cairosvgconverter",
     "sphinx_last_updated_by_git",
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx_sitemap",
     "sphinx.ext.napoleon",
 ]
 
@@ -262,13 +289,15 @@ exclude_patterns = [
 # Adds custom CSS files, located under 'html_static_path'
 
 html_css_files = [
-    "css/pdf.css",
+    "cookie-banner.css",
 ]
 
 
 # Adds custom JavaScript files, located under 'html_static_path'
 
-# html_js_files = []
+html_js_files = [
+    "analytics-bundle.js",
+]
 
 
 # Specifies a reST snippet to be appended to each .rst file
@@ -351,3 +380,8 @@ autodoc_default_options = {
 
 # This value stacks args vertically if a signature is too long.
 maximum_signature_line_length = 80
+
+# Configuration for intersphinx mapping
+intersphinx_mapping = {
+    "juju": ("https://documentation.ubuntu.com/juju/3.6/", None),
+}
