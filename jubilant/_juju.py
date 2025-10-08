@@ -299,7 +299,12 @@ class Juju:
         return stdout
 
     def _cli(
-        self, *args: str, include_model: bool = True, stdin: str | None = None, log: bool = True
+        self,
+        *args: str,
+        include_model: bool = True,
+        stdin: str | None = None,
+        log: bool = True,
+        timeout: float | None = None,
     ) -> tuple[str, str]:
         """Run a Juju CLI command and return its standard output and standard error."""
         if include_model and self.model is not None:
@@ -313,6 +318,7 @@ class Juju:
                 capture_output=True,
                 encoding='utf-8',
                 input=stdin,
+                timeout=timeout,
             )
         except subprocess.CalledProcessError as e:
             raise CLIError(e.returncode, e.cmd, e.stdout, e.stderr) from None
