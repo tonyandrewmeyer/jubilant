@@ -70,12 +70,20 @@ class RevealedSecret(Secret):
     """Represents a secret that was revealed, which has a content field that's populated."""
 
     checksum: str
+    """Checksum of the secret value or an empty string for Juju controllers < 3.6.0."""
+
     content: dict[str, str]
+    """Mapping of secret keys to secret values."""
 
     @classmethod
     def _from_dict(cls, d: dict[str, Any]) -> RevealedSecret:
         kwargs = dataclasses.asdict(super()._from_dict(d))
-        return RevealedSecret(content=d['content']['Data'], checksum=d['checksum'], **kwargs)
+        return RevealedSecret(
+            # Secret content checksums were introduced in Juju 3.6.0
+            content=d['content']['Data'],
+            checksum=d.get('checksum', ''),
+            **kwargs,
+        )
 
 
 @dataclasses.dataclass(frozen=True)
