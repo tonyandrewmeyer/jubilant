@@ -962,7 +962,9 @@ class Juju:
                     msg = f'timed out waiting for action, stderr:\n{exc.stderr}'
                     raise TimeoutError(msg) from None
                 # The "juju run" CLI command fails if the action has an uncaught exception.
-                if 'task failed' not in exc.stderr:
+                # In Juju 4.0, if the action is not defined, an error like this is returned:
+                # ERROR adding action operation: adding action operation: inserting operation action: inserting action "action-name" for charm "app-uuid" and operation "operation-uuid"
+                if 'task failed' not in exc.stderr and 'inserting operation action' not in exc.stderr:
                     raise
                 stdout = exc.stdout
                 stderr = exc.stderr
