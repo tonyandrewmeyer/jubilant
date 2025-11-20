@@ -1089,7 +1089,14 @@ class Juju:
             args.extend(['--revision', str(revision)])
         stdout = self.cli(*args)
         output = json.loads(stdout)
-        uri_from_juju, obj = next(iter(output.items()))
+        # In Juju 4, there is a bug where all secrets are returned.
+        if not output:
+            raise StopIteration()
+        for uri_from_juju, obj in output.items():
+            if obj['name'] == identifier or uri_from_juju == identifier:
+                break
+            # Allow falling through, which will give the first secret,
+            # which is correct in Juju 3.
         secret = {'uri': uri_from_juju, **obj}
         if reveal:
             return RevealedSecret._from_dict(secret)
