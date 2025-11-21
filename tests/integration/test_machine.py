@@ -13,6 +13,25 @@ def setup(juju: jubilant.Juju):
     juju.wait(jubilant.all_active)
 
 
+@pytest.fixture(scope='module')
+def private_key_file(juju: jubilant.Juju) -> Generator[str]:
+    with tempfile.NamedTemporaryFile(delete=False, dir=juju._temp_dir) as f:
+        temp_file = f.name
+
+    try:
+        subprocess.run(
+            ['/usr/bin/ssh-keygen', '-t', 'ed25519', '-f', temp_file, '-N', '""', '-q'], check=True
+        )
+        with open(temp_file + '.pub') as keyfile:
+            public_key = keyfile.read()
+        juju.add_ssh_key(public_key)
+        yield temp_file
+    finally:
+        juju.remove_ssh_key(public_key)
+        pathlib.Path(temp_file).unlink(missing_ok=True)
+        pathlib.Path(temp_file + '.pub').unlink(missing_ok=True)
+
+
 def test_exec(juju: jubilant.Juju):
     task = juju.exec('echo foo', machine=0)
     assert task.success
@@ -25,11 +44,11 @@ def test_exec(juju: jubilant.Juju):
     assert task.stdout == 'bar baz\n'
 
 
-def test_ssh(juju: jubilant.Juju):
-    output = juju.ssh('ubuntu/0', 'echo', 'UNIT')
+def test_ssh(juju: jubilant.Juju, private_key_file: str):
+    output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
     assert output == 'UNIT\n'
 
-    output = juju.ssh(0, 'echo', 'MACHINE')
+    output = juju.ssh(0, 'echo', 'MACHINE', ssh_options=['-i', private_key_file])
     assert output == 'MACHINE\n'
 
 
