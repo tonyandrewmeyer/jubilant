@@ -22,7 +22,7 @@ def setup(juju: jubilant.Juju):
 
 @pytest.fixture(scope='module')
 def ssh_key_pair(juju: jubilant.Juju) -> Generator[tuple[str, str]]:
-    with tempfile.NamedTemporaryFile(delete=False) as f:
+    with tempfile.NamedTemporaryFile(delete=False, dir=juju._temp_dir) as f:
         temp_file = f.name
 
     try:
