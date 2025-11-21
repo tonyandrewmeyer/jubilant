@@ -963,7 +963,9 @@ class Juju:
                     raise TimeoutError(msg) from None
                 # The "juju run" CLI command fails if the action has an uncaught exception.
                 # In Juju 4.0, if the action is not defined, an error like this is returned:
-                # ERROR adding action operation: adding action operation: inserting operation action: inserting action "action-name" for charm "app-uuid" and operation "operation-uuid"
+                #   ERROR adding action operation: adding action operation:
+                #   inserting operation action: inserting action "action-name" for charm
+                #   "app-uuid" and operation "operation-uuid"
                 if (
                     'task failed' not in exc.stderr
                     and 'inserting operation action' not in exc.stderr
@@ -1095,6 +1097,8 @@ class Juju:
         # In Juju 4, there is a bug where all secrets are returned.
         if not output:
             raise StopIteration()
+        uri_from_juju = ''
+        obj: dict[str, Any] = {}
         for uri_from_juju, obj in output.items():
             if obj['name'] == identifier or uri_from_juju == identifier:
                 break
