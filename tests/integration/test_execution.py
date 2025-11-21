@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import pathlib
+import subprocess
+import tempfile
+from typing import Generator
 
 import pytest
 
@@ -15,6 +18,23 @@ def setup(juju: jubilant.Juju):
     juju.wait(
         lambda status: status.apps['testdb'].units['testdb/0'].workload_status.current == 'unknown'
     )
+
+
+@pytest.fixture(scope='module')
+def ssh_key_pair(juju: jubilant.Juju) -> Generator[tuple[str, str]]:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        temp_file = f.name
+
+    try:
+        subprocess.run(
+            ['/usr/bin/ssh-keygen', '-t', 'ed25519', '-f', temp_file, '-N', '""', '-q'], check=True
+        )
+        with open(temp_file + '.pub') as keyfile:
+            public_key = keyfile.read()
+        yield public_key, temp_file
+    finally:
+        pathlib.Path(temp_file).unlink(missing_ok=True)
+        pathlib.Path(temp_file + '.pub').unlink(missing_ok=True)
 
 
 def test_run_success(juju: jubilant.Juju):
@@ -101,27 +121,52 @@ def test_exec_error_machine_on_k8s(juju: jubilant.Juju):
         juju.exec('echo foo', machine=0)
 
 
-def test_ssh_and_scp(juju: jubilant.Juju):
+def test_add_ssh_key(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
+    juju.add_ssh_key(ssh_key_pair[0])
+    # The key will be used in subsequent tests.
+
+
+def test_ssh_and_scp(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
     # The 'testdb' charm doesn't have any containers, so use 'snappass-test'.
     juju.deploy('snappass-test')
     juju.wait(lambda status: jubilant.all_active(status, 'snappass-test'))
 
-    output = juju.ssh('snappass-test/0', 'ls', '/charm/containers')
+    ssh_options = ['-i', ssh_key_pair[1]]
+    output = juju.ssh('snappass-test/0', 'ls', '/charm/containers', ssh_options=ssh_options)
     assert output.split() == ['redis', 'snappass']
-    output = juju.ssh('snappass-test/0', 'ls', '/charm/container', container='snappass')
+    output = juju.ssh(
+        'snappass-test/0', 'ls', '/charm/container', container='snappass', ssh_options=ssh_options
+    )
     assert 'pebble' in output.split()
-    output = juju.ssh('snappass-test/0', 'ls', '/charm/container', container='redis')
+    output = juju.ssh(
+        'snappass-test/0', 'ls', '/charm/container', container='redis', ssh_options=ssh_options
+    )
     assert 'pebble' in output.split()
 
-    juju.scp('snappass-test/0:agents/unit-snappass-test-0/charm/src/charm.py', 'charm.py')
+    juju.scp(
+        'snappass-test/0:agents/unit-snappass-test-0/charm/src/charm.py',
+        'charm.py',
+        scp_options=ssh_options,
+    )
     charm_src = pathlib.Path('charm.py').read_text()
     assert 'class Snappass' in charm_src
 
-    juju.scp('snappass-test/0:/etc/passwd', 'passwd', container='redis')
+    juju.scp('snappass-test/0:/etc/passwd', 'passwd', container='redis', scp_options=ssh_options)
     passwd = pathlib.Path('passwd').read_text()
     assert 'redis:' in passwd
 
 
-def test_cli_input(juju: jubilant.Juju):
-    stdout = juju.cli('ssh', '--container', 'charm', 'testdb/0', 'cat', stdin='foo')
+def test_cli_input(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
+    stdout = juju.cli(
+        'ssh', '--container', 'charm', 'testdb/0', '-i', ssh_key_pair[1], 'cat', stdin='foo'
+    )
     assert stdout == 'foo'
+
+
+def test_remove_ssh_key(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
+    public_key, private_key_file = ssh_key_pair
+    juju.remove_ssh_key(public_key)
+    with pytest.raises(jubilant.CLIError, match='Permission denied'):
+        juju.ssh(
+            'snappass-test/0', 'ls', '/charm/containers', ssh_options=['-i', private_key_file]
+        )
