@@ -50,6 +50,16 @@ def test_run_success(juju: jubilant.Juju):
     }
 
 
+def test_run_leader(juju: jubilant.Juju):
+    task = juju.run('testdb/leader', 'do-thing', {'param2': 'value2'})
+    assert task.success
+    assert task.results == {
+        'config': {'testoption': 'foobar'},
+        'params': {'param2': 'value2'},
+        'thingy': 'foo',
+    }
+
+
 def test_run_error(juju: jubilant.Juju):
     with pytest.raises(jubilant.TaskError) as excinfo:
         juju.run('testdb/0', 'do-thing', {'error': 'ERR'})
@@ -97,6 +107,12 @@ def test_exec_success(juju: jubilant.Juju):
     assert task.stdout == 'bar baz\n'
 
 
+def test_exec_leader(juju: jubilant.Juju):
+    task = juju.exec('echo foo', unit='testdb/leader')
+    assert task.success
+    assert task.stdout == 'foo\n'
+
+
 def test_exec_error(juju: jubilant.Juju):
     with pytest.raises(jubilant.TaskError) as excinfo:
         juju.exec('sleep x', unit='testdb/0')
@@ -126,7 +142,7 @@ def test_add_ssh_key(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
     # The key will be used in subsequent tests.
 
 
-def test_ssh_and_scp(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
+def test_ssh(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
     # The 'testdb' charm doesn't have any containers, so use 'snappass-test'.
     juju.deploy('snappass-test')
     juju.wait(lambda status: jubilant.all_active(status, 'snappass-test'))
@@ -143,17 +159,28 @@ def test_ssh_and_scp(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
     )
     assert 'pebble' in output.split()
 
+
+def test_scp(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):
+    scp_options = ['-i', ssh_key_pair[1]]
     juju.scp(
         'snappass-test/0:agents/unit-snappass-test-0/charm/src/charm.py',
         'charm.py',
-        scp_options=ssh_options,
+        scp_options=scp_options,
     )
     charm_src = pathlib.Path('charm.py').read_text()
     assert 'class Snappass' in charm_src
 
-    juju.scp('snappass-test/0:/etc/passwd', 'passwd', container='redis', scp_options=ssh_options)
+    juju.scp('snappass-test/0:/etc/passwd', 'passwd', container='redis', scp_options=scp_options)
     passwd = pathlib.Path('passwd').read_text()
     assert 'redis:' in passwd
+
+    # Test a round trip
+    with tempfile.NamedTemporaryFile('w+') as fsrc, tempfile.NamedTemporaryFile('w+') as fdst:
+        fsrc.write('roundtrip')
+        fsrc.flush()
+        juju.scp(fsrc.name, 'snappass-test/0:/tmp/roundtrip.py', scp_options=scp_options)
+        juju.scp('snappass-test/0:/tmp/roundtrip.py', fdst.name, scp_options=scp_options)
+        assert pathlib.Path(fdst.name).read_text() == 'roundtrip'
 
 
 def test_cli_input(juju: jubilant.Juju, ssh_key_pair: tuple[str, str]):

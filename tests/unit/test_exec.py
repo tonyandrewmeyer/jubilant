@@ -36,10 +36,41 @@ def test_unit(run: mocks.Run):
     assert task.success
 
 
+def test_leader(run: mocks.Run):
+    out_json = r"""
+{
+  "ubuntu/0": {
+    "id": "28",
+    "results": {
+      "return-code": 0,
+      "stdout": "foo\n"
+    },
+    "status": "completed",
+    "unit": "ubuntu/0"
+  }
+}
+"""
+    run.handle(
+        ['juju', 'exec', '--format', 'json', '--unit', 'ubuntu/leader', '--', 'echo', 'bar'],
+        stdout=out_json,
+    )
+    juju = jubilant.Juju()
+
+    task = juju.exec('echo', 'bar', unit='ubuntu/leader')
+
+    assert task == jubilant.Task(
+        id='28',
+        status='completed',
+        return_code=0,
+        stdout='foo\n',
+    )
+    assert task.success
+
+
 def test_machine(run: mocks.Run):
     out_json = r"""
 {
-  "3": {
+  "0/lxd/0": {
     "id": "28",
     "results": {
       "return-code": 0,
@@ -51,12 +82,12 @@ def test_machine(run: mocks.Run):
 }
 """
     run.handle(
-        ['juju', 'exec', '--format', 'json', '--machine', '3', '--', 'echo', 'bar'],
+        ['juju', 'exec', '--format', 'json', '--machine', '0/lxd/0', '--', 'echo', 'bar'],
         stdout=out_json,
     )
     juju = jubilant.Juju()
 
-    task = juju.exec('echo', 'bar', machine=3)
+    task = juju.exec('echo', 'bar', machine='0/lxd/0')
 
     assert task == jubilant.Task(
         id='28',
@@ -148,7 +179,7 @@ def test_machine_not_found(run: mocks.Run):
     juju = jubilant.Juju()
 
     with pytest.raises(ValueError):
-        juju.exec('echo', machine=0)
+        juju.exec('echo', machine='0')
 
 
 def test_unit_not_found(run: mocks.Run):
@@ -165,3 +196,35 @@ def test_type_errors():
         juju.exec('echo')  # type: ignore
     with pytest.raises(TypeError):
         juju.exec('echo', machine=0, unit='ubuntu/0')  # type: ignore
+
+
+def test_machine_int(run: mocks.Run):
+    """Test that machine parameter accepts integer IDs."""
+    out_json = r"""
+{
+  "3": {
+    "id": "29",
+    "results": {
+      "return-code": 0,
+      "stdout": "hello\n"
+    },
+    "status": "completed",
+    "unit": "ubuntu/0"
+  }
+}
+"""
+    run.handle(
+        ['juju', 'exec', '--format', 'json', '--machine', '3', '--', 'echo', 'hello'],
+        stdout=out_json,
+    )
+    juju = jubilant.Juju()
+
+    task = juju.exec('echo', 'hello', machine=3)
+
+    assert task == jubilant.Task(
+        id='29',
+        status='completed',
+        return_code=0,
+        stdout='hello\n',
+    )
+    assert task.success
