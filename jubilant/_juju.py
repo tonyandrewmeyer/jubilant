@@ -1234,7 +1234,7 @@ class Juju:
         uri_from_juju = ''
         obj: dict[str, Any] = {}
         for uri_from_juju, obj in output.items():
-            if obj['name'] == identifier or uri_from_juju == identifier:
+            if uri_from_juju == identifier or ('name' in obj and obj['name'] == identifier):
                 break
             # Allow falling through, which will give the first secret,
             # which is correct in Juju 3.
