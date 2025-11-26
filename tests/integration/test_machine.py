@@ -20,6 +20,9 @@ def setup(juju: jubilant.Juju):
 
 @pytest.fixture(scope='module')
 def private_key_file(juju: jubilant.Juju) -> Generator[str]:
+    subprocess.run(['/usr/bin/apt', 'update'], check=True)
+    subprocess.run(['/usr/bin/apt', 'install', '-y', 'openssh-client'], check=True)
+
     with tempfile.NamedTemporaryFile(delete=False, dir=juju._temp_dir) as f:
         temp_file = f.name
 
