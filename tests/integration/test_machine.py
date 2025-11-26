@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import pathlib
+import subprocess
+import tempfile
+from typing import Generator
+
 import pytest
 
 import jubilant
@@ -18,6 +23,7 @@ def private_key_file(juju: jubilant.Juju) -> Generator[str]:
     with tempfile.NamedTemporaryFile(delete=False, dir=juju._temp_dir) as f:
         temp_file = f.name
 
+    public_key = None
     try:
         subprocess.run(
             ['/usr/bin/ssh-keygen', '-t', 'ed25519', '-f', temp_file, '-N', '""', '-q'], check=True
@@ -27,7 +33,8 @@ def private_key_file(juju: jubilant.Juju) -> Generator[str]:
         juju.add_ssh_key(public_key)
         yield temp_file
     finally:
-        juju.remove_ssh_key(public_key)
+        if public_key:
+            juju.remove_ssh_key(public_key)
         pathlib.Path(temp_file).unlink(missing_ok=True)
         pathlib.Path(temp_file + '.pub').unlink(missing_ok=True)
 
