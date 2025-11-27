@@ -14,9 +14,12 @@ def test_offer_and_consume(juju: jubilant.Juju, model2: jubilant.Juju):
     model2.integrate('dbalias', 'testapp')
 
     status = juju.wait(jubilant.all_active)
-    assert status.apps['testdb'].app_status.message == 'relation created'
+    assert status.apps['testdb'].units['testdb/0'].workload_status.message == 'relation created'
 
     status2 = model2.wait(jubilant.all_active)
     assert status2.apps['testapp'].relations['db'][0].related_app == 'dbalias'
-    assert status2.apps['testapp'].app_status.message == 'relation changed: dbkey=dbvalue'
+    assert (
+        status2.apps['testapp'].units['testdb/0'].workload_status.message
+        == 'relation changed: dbkey=dbvalue'
+    )
     assert status2.app_endpoints['dbalias'].relations['db'][0] == 'testapp'
