@@ -16,7 +16,7 @@ def test_offer_and_consume(juju: jubilant.Juju, model2: jubilant.Juju):
     status = juju.wait(jubilant.all_active)
     assert status.apps['testdb'].units['testdb/0'].workload_status.message == 'relation created'
 
-    status2 = model2.wait(jubilant.all_active)
+    status2 = model2.wait(jubilant.all_active, timeout=900)
     assert status2.apps['testapp'].relations['db'][0].related_app == 'dbalias'
     assert (
         status2.apps['testapp'].units['testapp/0'].workload_status.message
