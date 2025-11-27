@@ -103,7 +103,7 @@ class Revision:
     def _from_dict(cls, d: dict[str, Any]) -> Revision:
         return cls(
             revision=d['revision'],
-            backend=d['backend'],
+            backend=d.get('backend', ''),
             created=_datetime_from_iso(d['created']),
             updated=_datetime_from_iso(d['updated']),
         )

@@ -13,8 +13,11 @@ def test_integrate_and_remove_relation(juju: jubilant.Juju):
     status = juju.wait(jubilant.all_active)
     assert status.apps['testdb'].relations['db'][0].related_app == 'testapp'
     assert status.apps['testapp'].relations['db'][0].related_app == 'testdb'
-    assert status.apps['testdb'].app_status.message == 'relation created'
-    assert status.apps['testapp'].app_status.message == 'relation changed: dbkey=dbvalue'
+    assert status.apps['testdb'].units['testdb/0'].workload_status.message == 'relation created'
+    assert (
+        status.apps['testapp'].units['testapp/0'].workload_status.message
+        == 'relation changed: dbkey=dbvalue'
+    )
 
     juju.remove_relation('testdb', 'testapp')
     juju.wait(

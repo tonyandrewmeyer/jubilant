@@ -1057,7 +1057,14 @@ class Juju:
                     msg = f'timed out waiting for action, stderr:\n{exc.stderr}'
                     raise TimeoutError(msg) from None
                 # The "juju run" CLI command fails if the action has an uncaught exception.
-                if 'task failed' not in exc.stderr:
+                # In Juju 4.0, if the action is not defined, an error like this is returned:
+                #   ERROR adding action operation: adding action operation:
+                #   inserting operation action: inserting action "action-name" for charm
+                #   "app-uuid" and operation "operation-uuid"
+                if (
+                    'task failed' not in exc.stderr
+                    and 'inserting operation action' not in exc.stderr
+                ):
                     raise
                 stdout = exc.stdout
                 stderr = exc.stderr
@@ -1219,9 +1226,27 @@ class Juju:
             args.append('--revisions')
         if revision is not None:
             args.extend(['--revision', str(revision)])
-        stdout = self.cli(*args)
+        try:
+            stdout = self.cli(*args)
+        except CLIError as e:
+            # Because of the Juju 4 bug, asking for a specific revision may
+            # fail, if all secrets don't have a revision of that number.
+            if revision is not None and 'secret revision not found' in e.stderr:
+                uris = [secret.uri for secret in self.secrets() if secret.name == identifier]
+                if len(uris) == 1 and uris[0] != identifier:
+                    return self.show_secret(uris[0], reveal=reveal, revision=revision)
+            raise
         output = json.loads(stdout)
-        uri_from_juju, obj = next(iter(output.items()))
+        # In Juju 4, there is a bug where all secrets are returned.
+        if not output:
+            raise StopIteration()
+        uri_from_juju = ''
+        obj: dict[str, Any] = {}
+        for uri_from_juju, obj in output.items():
+            if uri_from_juju == identifier or ('name' in obj and obj['name'] == identifier):
+                break
+            # Allow falling through, which will give the first secret,
+            # which is correct in Juju 3.
         secret = {'uri': uri_from_juju, **obj}
         if reveal:
             return RevealedSecret._from_dict(secret)
