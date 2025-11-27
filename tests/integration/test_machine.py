@@ -29,9 +29,6 @@ def private_key_file(juju: jubilant.Juju) -> Generator[str]:
 
     try:
         juju.add_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
-        # The key is not available for use immediately. For now, just wait for a
-        # moment. Waiting for `ssh-keys` to not be empty does not work as a solution.
-        time.sleep(1)
         yield temp_file
     finally:
         juju.remove_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
@@ -51,7 +48,15 @@ def test_exec(juju: jubilant.Juju):
 
 
 def test_ssh(juju: jubilant.Juju, private_key_file: str):
-    output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
+    # The key is not available for use immediately. For now, just wait for a
+    # moment. Waiting for `ssh-keys` to not be empty does not work as a solution.
+    for _ in range(60):
+        try:
+            output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
+        except jubilant.CLIError as e:  # noqa: PERF203
+            if 'Permission denied (publickey).' not in e.stderr:
+                raise
+            time.sleep(10)
     assert output == 'UNIT\n'
 
     output = juju.ssh(0, 'echo', 'MACHINE', ssh_options=['-i', private_key_file])
