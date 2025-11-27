@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import tempfile
+import time
 from typing import Generator
 
 import pytest
@@ -24,12 +25,13 @@ def private_key_file(juju: jubilant.Juju) -> Generator[str]:
     with tempfile.NamedTemporaryFile(mode='w', delete=False, dir=juju._temp_dir) as f:
         f.write(helpers.TEST_SSH_PRIVATE_KEY)
         temp_file = f.name
-
-    # Set correct permissions for SSH private key
     pathlib.Path(temp_file).chmod(0o600)
 
     try:
         juju.add_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
+        # The key is not available for use immediately. For now, just wait for a
+        # moment. Waiting for `ssh-keys` to not be empty does not work as a solution.
+        time.sleep(1)
         yield temp_file
     finally:
         juju.remove_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
