@@ -50,6 +50,7 @@ def test_exec(juju: jubilant.Juju):
 def test_ssh(juju: jubilant.Juju, private_key_file: str):
     # The key is not available for use immediately. For now, just wait for a
     # moment. Waiting for `ssh-keys` to not be empty does not work as a solution.
+    output = None
     for _ in range(60):
         try:
             output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
