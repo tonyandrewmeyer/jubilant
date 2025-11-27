@@ -1227,7 +1227,16 @@ class Juju:
         if revision is not None:
             args.extend(['--revision', str(revision)])
         stdout = self.cli(*args)
-        output = json.loads(stdout)
+        try:
+            output = json.loads(stdout)
+        except CLIError as e:
+            # Because of the Juju 4 bug, asking for a specific revision may
+            # fail, if all secrets don't have a revision of that number.
+            if revision is not None and 'secret revision not found' in e.stderr:
+                uris = [secret.uri for secret in self.secrets() if secret.name == identifier]
+                if len(uris) == 1 and uris[0] != identifier:
+                    return self.show_secret(uris[0], reveal=reveal, revision=revision)
+            raise
         # In Juju 4, there is a bug where all secrets are returned.
         if not output:
             raise StopIteration()
