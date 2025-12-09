@@ -57,7 +57,9 @@ def test_ssh(juju: jubilant.Juju, private_key_file: str):
         except jubilant.CLIError as e:  # noqa: PERF203
             if 'Permission denied (publickey).' not in e.stderr:
                 raise
-            time.sleep(10)
+            time.sleep(1)
+        else:
+            break
     assert output == 'UNIT\n'
 
     output = juju.ssh(0, 'echo', 'MACHINE', ssh_options=['-i', private_key_file])
