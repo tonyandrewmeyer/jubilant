@@ -1226,27 +1226,9 @@ class Juju:
             args.append('--revisions')
         if revision is not None:
             args.extend(['--revision', str(revision)])
-        try:
-            stdout = self.cli(*args)
-        except CLIError as e:
-            # Because of the Juju 4 bug, asking for a specific revision may
-            # fail, if all secrets don't have a revision of that number.
-            if revision is not None and 'secret revision not found' in e.stderr:
-                uris = [secret.uri for secret in self.secrets() if secret.name == identifier]
-                if len(uris) == 1 and uris[0] != identifier:
-                    return self.show_secret(uris[0], reveal=reveal, revision=revision)
-            raise
+        stdout = self.cli(*args)
         output = json.loads(stdout)
-        # In Juju 4, there is a bug where all secrets are returned.
-        if not output:
-            raise StopIteration()
-        uri_from_juju = ''
-        obj: dict[str, Any] = {}
-        for uri_from_juju, obj in output.items():
-            if uri_from_juju == identifier or ('name' in obj and obj['name'] == identifier):
-                break
-            # Allow falling through, which will give the first secret,
-            # which is correct in Juju 3.
+        uri_from_juju, obj = next(iter(output.items()))
         secret = {'uri': uri_from_juju, **obj}
         if reveal:
             return RevealedSecret._from_dict(secret)
