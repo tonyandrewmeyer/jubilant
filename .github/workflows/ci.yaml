@@ -52,11 +52,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        k8s: ["microk8s", "k8s"]
         juju-channel: ["3/stable", "4/stable"]
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.juju-channel }}-${{ matrix.k8s }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.juju-channel }}-k8s
       cancel-in-progress: true
 
     steps:
@@ -75,7 +74,7 @@ jobs:
         run: sudo snap install --classic concierge
 
       - name: Prepare Juju
-        run: sudo concierge prepare --verbose --juju-channel=${{ matrix.juju-channel }} --charmcraft-channel=3.x/stable -p ${{ matrix.k8s }}
+        run: sudo concierge prepare --verbose --juju-channel=${{ matrix.juju-channel }} --charmcraft-channel=3.x/stable -p k8s
 
       - name: Pack test charms
         run: make pack
