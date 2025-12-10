@@ -2,19 +2,38 @@ from __future__ import annotations
 
 import pathlib
 
+import cryptography.hazmat.backends
+import cryptography.hazmat.primitives.asymmetric.rsa
+import cryptography.hazmat.primitives.serialization
+
+
 CHARMS_PATH = pathlib.Path(__file__).parent / 'charms'
 
-# Test SSH key pair - only for use in integration tests
-TEST_SSH_PRIVATE_KEY = """-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACDBApPszf6ki9VNAWpAsU6VY1iM59qe5HyE08zr8tw0SgAAAKDNXMCLzVzA
-iwAAAAtzc2gtZWQyNTUxOQAAACDBApPszf6ki9VNAWpAsU6VY1iM59qe5HyE08zr8tw0Sg
-AAAEAVfiT1ThKA3424TcV06ftOd1agt6trEQfYrI6wfULvCsECk+zN/qSL1U0BakCxTpVj
-WIzn2p7kfITTzOvy3DRKAAAAF3RhbWV5ZXJAdGFtLWNhbm9uY2lhbC0xAQIDBAUG
------END OPENSSH PRIVATE KEY-----
-"""
 
-TEST_SSH_PUBLIC_KEY = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMECk+zN/qSL1U0BakCxTpVjWIzn2p7kfITTzOvy3DRK tameyer@tam-canoncial-1'
+def generate_ssh_key_pair() -> tuple[str, str]:
+    """Generate an SSH key pair dynamically using cryptography library.
+
+    Returns:
+        Tuple of (private_key_pem, public_key_ssh) where:
+        - private_key_pem is the RSA private key in PEM format
+        - public_key_ssh is the public key in SSH format (ssh-rsa ...)
+    """
+    private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+        backend=cryptography.hazmat.backends.default_backend(),
+    )
+    private_key_pem = private_key.private_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
+        format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption(),
+    ).decode('utf-8')
+    public_key = private_key.public_key()
+    public_key_ssh = public_key.public_bytes(
+        encoding=cryptography.hazmat.primitives.serialization.Encoding.OpenSSH,
+        format=cryptography.hazmat.primitives.serialization.PublicFormat.OpenSSH,
+    ).decode('utf-8')
+    return private_key_pem, public_key_ssh
 
 
 def find_charm(name: str) -> pathlib.Path:

@@ -22,16 +22,18 @@ def setup(juju: jubilant.Juju):
 
 @pytest.fixture(scope='module')
 def private_key_file(juju: jubilant.Juju) -> Generator[str]:
+    private_key_pem, public_key_ssh = helpers.generate_ssh_key_pair()
+
     with tempfile.NamedTemporaryFile(mode='w', delete=False, dir=juju._temp_dir) as f:
-        f.write(helpers.TEST_SSH_PRIVATE_KEY)
+        f.write(private_key_pem)
         temp_file = f.name
     pathlib.Path(temp_file).chmod(0o600)
 
     try:
-        juju.add_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
+        juju.add_ssh_key(public_key_ssh)
         yield temp_file
     finally:
-        juju.remove_ssh_key(helpers.TEST_SSH_PUBLIC_KEY)
+        juju.remove_ssh_key(public_key_ssh)
         pathlib.Path(temp_file).unlink(missing_ok=True)
 
 
