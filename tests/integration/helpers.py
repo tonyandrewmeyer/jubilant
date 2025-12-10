@@ -6,7 +6,6 @@ import cryptography.hazmat.backends
 import cryptography.hazmat.primitives.asymmetric.rsa
 import cryptography.hazmat.primitives.serialization
 
-
 CHARMS_PATH = pathlib.Path(__file__).parent / 'charms'
 
 
