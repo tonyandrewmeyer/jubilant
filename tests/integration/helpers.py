@@ -26,7 +26,7 @@ def generate_ssh_key_pair() -> tuple[str, str]:
         encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
         format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption(),
-    ).decode('utf-8')
+    ).decode()
     public_key = private_key.public_key()
     public_key_ssh = public_key.public_bytes(
         encoding=cryptography.hazmat.primitives.serialization.Encoding.OpenSSH,
