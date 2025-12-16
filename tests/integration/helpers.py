@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pathlib
 
-import cryptography.hazmat.backends
-import cryptography.hazmat.primitives.asymmetric.rsa
-import cryptography.hazmat.primitives.serialization
+from cryptography.hazmat import backends
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 CHARMS_PATH = pathlib.Path(__file__).parent / 'charms'
 
@@ -17,20 +17,20 @@ def generate_ssh_key_pair() -> tuple[str, str]:
         - private_key_pem is the RSA private key in PEM format
         - public_key_ssh is the public key in SSH format (ssh-rsa ...)
     """
-    private_key = cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
+    private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
-        backend=cryptography.hazmat.backends.default_backend(),
+        backend=backends.default_backend(),
     )
     private_key_pem = private_key.private_bytes(
-        encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
-        format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption(),
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
     ).decode()
     public_key = private_key.public_key()
     public_key_ssh = public_key.public_bytes(
-        encoding=cryptography.hazmat.primitives.serialization.Encoding.OpenSSH,
-        format=cryptography.hazmat.primitives.serialization.PublicFormat.OpenSSH,
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH,
     ).decode()
     return private_key_pem, public_key_ssh
 
