@@ -19,8 +19,10 @@ class Space:
         # Handle both simple string subnets and complex subnet objects
         if subnets_data and isinstance(subnets_data[0], str):
             subnets = [Subnet(cidr=cidr) for cidr in subnets_data]
-        else:
+        elif subnets_data:
             subnets = [Subnet._from_dict(subnet) for subnet in subnets_data]
+        else:
+            subnets = []
         return Space(
             name=d['name'],
             subnets=subnets,
