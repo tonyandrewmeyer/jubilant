@@ -17,9 +17,9 @@ class Space:
     def _from_dict(cls, d: dict[str, Any]) -> Space:
         subnets_data = d.get('subnets', [])
         # Handle both simple string subnets and complex subnet objects
-        if subnets_data and isinstance(subnets_data[0], str):
+        if len(subnets_data) > 0 and isinstance(subnets_data[0], str):
             subnets = [Subnet(cidr=cidr) for cidr in subnets_data]
-        elif subnets_data:
+        elif len(subnets_data) > 0:
             subnets = [Subnet._from_dict(subnet) for subnet in subnets_data]
         else:
             subnets = []
