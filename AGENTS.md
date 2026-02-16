@@ -38,7 +38,7 @@ The `Juju` class is the main entry point. Every public method corresponds to a J
 
 ### Type System: `jubilant/statustypes.py`, `modeltypes.py`, `secrettypes.py`
 
-Frozen dataclasses representing structured Juju output. Each has a `_from_dict()` class method for parsing JSON. These are all generated automatically from the Juju Go code, and should Inever* be modified by AI.
+Frozen dataclasses representing structured Juju output. Each has a `_from_dict()` class method for parsing JSON. These are all generated automatically from the Juju Go code, and should *never* be modified by AI.
 
 ### Wait Pattern: `jubilant/_all_any.py`
 
