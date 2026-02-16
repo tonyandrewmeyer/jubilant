@@ -240,6 +240,16 @@ class Juju:
 
         return SecretURI(output.strip())
 
+    def add_space(self, name: str, *cidrs: str) -> None:
+        """Add a new network space, optionally associating subnet CIDRs with it.
+
+        Args:
+            name: Name of the space to add.
+            cidrs: Optional subnet CIDRs to associate with the space,
+                for example ``'172.31.0.0/20'``.
+        """
+        self.cli('add-space', name, *cidrs)
+
     def add_ssh_key(self, *keys: str) -> None:
         """Add one or more SSH keys to the model.
 
@@ -849,6 +859,21 @@ class Juju:
         args.extend(_format_config(k, v) for k, v in constraints.items())
         self.cli(*args)
 
+    def move_to_space(self, name: str, *cidrs: str, force: bool = False) -> None:
+        """Move subnets to a network space.
+
+        The specified subnets leave their current space and enter the given one.
+
+        Args:
+            name: Name of the space to move subnets to.
+            cidrs: Subnet CIDRs to move to the space, for example ``'172.31.1.0/28'``.
+            force: Allow moving subnets even if they are in use on another machine.
+        """
+        args = ['move-to-space', name, *cidrs]
+        if force:
+            args.append('--force')
+        self.cli(*args)
+
     def offer(
         self,
         app: str,
@@ -939,6 +964,10 @@ class Juju:
 
             self.cli(*args)
 
+    def reload_spaces(self) -> None:
+        """Reload spaces and subnets from the substrate."""
+        self.cli('reload-spaces')
+
     def remove_application(
         self,
         *app: str,
@@ -989,6 +1018,21 @@ class Juju:
         args = ['remove-secret', identifier]
         if revision is not None:
             args.extend(['--revision', str(revision)])
+        self.cli(*args)
+
+    def remove_space(self, name: str, *, force: bool = False) -> None:
+        """Remove a network space.
+
+        Any subnets associated with the space will be transferred to the default space.
+
+        Args:
+            name: Name of the space to remove.
+            force: Remove the space even if there are existing bindings, constraints,
+                or controller settings.
+        """
+        args = ['remove-space', '--yes', name]
+        if force:
+            args.append('--force')
         self.cli(*args)
 
     def remove_ssh_key(self, *ids: str) -> None:
@@ -1043,6 +1087,15 @@ class Juju:
             args.extend(['--num-units', str(num_units)])
 
         self.cli(*args)
+
+    def rename_space(self, name: str, new_name: str) -> None:
+        """Rename a network space.
+
+        Args:
+            name: Current name of the space.
+            new_name: New name for the space.
+        """
+        self.cli('rename-space', name, new_name)
 
     def run(
         self,
@@ -1276,6 +1329,26 @@ class Juju:
         if reveal:
             return RevealedSecret._from_dict(secret)
         return Secret._from_dict(secret)
+
+    def show_space(self, name: str) -> dict[str, Any]:
+        """Show information about a network space.
+
+        Returns a dict with keys ``'space'``, ``'applications'``, and
+        ``'machine-count'``.
+
+        Args:
+            name: Name of the space to show.
+        """
+        stdout = self.cli('show-space', '--format', 'json', name)
+        return json.loads(stdout)
+
+    def spaces(self) -> dict[str, Any]:
+        """List all network spaces in the model.
+
+        Returns a dict with a ``'spaces'`` key containing a list of space dicts.
+        """
+        stdout = self.cli('spaces', '--format', 'json')
+        return json.loads(stdout)
 
     def ssh(
         self,
