@@ -40,20 +40,20 @@ def test_exec(juju: jubilant.Juju):
     task = juju.exec('echo foo', machine=0)
     assert task.success
     assert task.return_code == 0
-    assert task.stdout == 'foo\n'
+    assert task.stdout == 'foo'
     assert task.stderr == ''
 
     task = juju.exec('echo', 'bar', 'baz', machine=0)
     assert task.success
-    assert task.stdout == 'bar baz\n'
+    assert task.stdout == 'bar baz'
 
 
 def test_ssh(juju: jubilant.Juju, private_key_file: str):
     output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
-    assert output == 'UNIT\n'
+    assert output == 'UNIT'
 
     output = juju.ssh(0, 'echo', 'MACHINE', ssh_options=['-i', private_key_file])
-    assert output == 'MACHINE\n'
+    assert output == 'MACHINE'
 
 
 def test_add_and_remove_unit(juju: jubilant.Juju):
