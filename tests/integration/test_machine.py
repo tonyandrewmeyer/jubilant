@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pathlib
 import tempfile
-import time
 from typing import Generator
 
 import pytest
@@ -12,12 +11,6 @@ import jubilant
 from . import helpers
 
 pytestmark = pytest.mark.machine
-
-
-@pytest.fixture(scope='module', autouse=True)
-def setup(juju: jubilant.Juju):
-    juju.deploy('ubuntu')
-    juju.wait(jubilant.all_active)
 
 
 @pytest.fixture(scope='module')
@@ -37,6 +30,12 @@ def private_key_file(juju: jubilant.Juju) -> Generator[str]:
         pathlib.Path(temp_file).unlink(missing_ok=True)
 
 
+@pytest.fixture(scope='module', autouse=True)
+def setup(juju: jubilant.Juju, private_key_file: str):
+    juju.deploy('ubuntu')
+    juju.wait(jubilant.all_active)
+
+
 def test_exec(juju: jubilant.Juju):
     task = juju.exec('echo foo', machine=0)
     assert task.success
@@ -50,18 +49,7 @@ def test_exec(juju: jubilant.Juju):
 
 
 def test_ssh(juju: jubilant.Juju, private_key_file: str):
-    # The key is not available for use immediately. For now, just wait for a
-    # moment. Waiting for `ssh-keys` to not be empty does not work as a solution.
-    output = None
-    for _ in range(60):
-        try:
-            output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
-        except jubilant.CLIError as e:  # noqa: PERF203
-            if 'Permission denied (publickey).' not in e.stderr:
-                raise
-            time.sleep(1)
-        else:
-            break
+    output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=['-i', private_key_file])
     assert output == 'UNIT\n'
 
     output = juju.ssh(0, 'echo', 'MACHINE', ssh_options=['-i', private_key_file])
