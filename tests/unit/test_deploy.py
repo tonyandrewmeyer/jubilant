@@ -158,3 +158,44 @@ def test_tempdir(monkeypatch: pytest.MonkeyPatch):
         )
 
     assert num_calls == 1
+
+
+def test_tempdir_preserves_resource_extension(run: mocks.Run, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr('shutil.which', lambda _: '/snap/bin/juju')  # type: ignore
+
+    with tempfile.TemporaryDirectory() as temp:
+        snap_dir = pathlib.Path(temp) / 'snap'
+        snap_dir.mkdir()
+        monkeypatch.setattr('tempfile.TemporaryDirectory', mocks.TemporaryDirectory(str(snap_dir)))
+
+        src_dir = pathlib.Path(temp) / 'src'
+        src_dir.mkdir()
+        (src_dir / 'my.charm').write_text('CH')
+        (src_dir / 'archive.tar').write_text('TAR')
+        (src_dir / 'rawfile').write_text('RAW')
+
+        run.handle(
+            [
+                'juju',
+                'deploy',
+                f'{snap_dir}/_temp.charm',
+                '--resource',
+                f'plugin={snap_dir}/plugin.tar',
+                '--resource',
+                f'noext={snap_dir}/noext',
+            ]
+        )
+
+        juju = jubilant.Juju()
+        juju.deploy(
+            src_dir / 'my.charm',
+            resources={
+                'plugin': str(src_dir / 'archive.tar'),
+                'noext': str(src_dir / 'rawfile'),
+            },
+        )
+
+        # Verify files were copied with correct names.
+        assert (snap_dir / '_temp.charm').read_text() == 'CH'
+        assert (snap_dir / 'plugin.tar').read_text() == 'TAR'
+        assert (snap_dir / 'noext').read_text() == 'RAW'

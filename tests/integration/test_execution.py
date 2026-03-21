@@ -159,6 +159,24 @@ def test_scp(juju: jubilant.Juju):
         assert pathlib.Path(fdst.name).read_text() == 'roundtrip'
 
 
+def test_scp_directory(juju: jubilant.Juju):
+    with tempfile.TemporaryDirectory() as src, tempfile.TemporaryDirectory() as dst:
+        src_dir = pathlib.Path(src) / 'mydir'
+        src_dir.mkdir()
+        (src_dir / 'a.txt').write_text('A')
+        (src_dir / 'b.txt').write_text('B')
+
+        # Local directory to remote
+        juju.scp(str(src_dir), 'snappass-test/0:/tmp/mydir', scp_options=['-r'])
+
+        # Remote directory back to local
+        dst_dir = pathlib.Path(dst) / 'mydir'
+        juju.scp('snappass-test/0:/tmp/mydir', str(dst_dir), scp_options=['-r'])
+
+        assert (dst_dir / 'a.txt').read_text() == 'A'
+        assert (dst_dir / 'b.txt').read_text() == 'B'
+
+
 def test_cli_input(juju: jubilant.Juju):
     stdout = juju.cli('ssh', '--container', 'charm', 'testdb/0', 'cat', stdin='foo')
     assert stdout == 'foo'
