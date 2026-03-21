@@ -5,5 +5,3 @@ rules:
         "actions/*": ref-pin
         "github/*": ref-pin
         "pypa/*": ref-pin
-        "astral-sh/*": hash-pin
-        "canonical/*": hash-pin
