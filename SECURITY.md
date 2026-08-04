@@ -33,3 +33,7 @@ The [Ubuntu Security disclosure and embargo
 policy](https://ubuntu.com/security/disclosure-policy) contains more
 information about what you can expect when you contact us, and what we
 expect from you.
+
+## Security announcements
+
+Security advisories for this project are published through [GitHub Security Advisories](https://github.com/canonical/jubilant/security/advisories) once a fix is available.
