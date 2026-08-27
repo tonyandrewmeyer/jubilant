@@ -24,7 +24,6 @@ make help                   # Run to see all available commands
 - **Type hints**: Strict pyright mode; `from __future__ import annotations` in every file
 - **Imports**: Import modules, not other objects, unless they are only used for type annotations
 - **Target Python**: 3.10+
-- **Comments**: Explain *why*, not *what*; if necessary for 'what', consider rewriting so that they are not
 
 Ensure that `pre-commit` is installed (with the user's permission) so that style is enforced with every commit. If the user does not permit using `pre-commit`, *always* ensure that `make all` shows no issues before committing.
 
@@ -38,9 +37,9 @@ Avoiding writing documentation: that is a task for humans. When reviewing docume
 
 The `Juju` class is the main entry point. Every public method except `wait` corresponds to a Juju CLI command. All commands are executed via `subprocess.run()` through the private `_cli()` method. Errors raise `CLIError` (subclass of `CalledProcessError`).
 
-### Type System: `jubilant/statustypes.py`, `modeltypes.py`, `secrettypes.py`
+### Type System: `jubilant/statustypes.py`, `jubilant/modeltypes.py`, `jubilant/unittypes.py`
 
-Frozen dataclasses representing structured Juju output. Each has a `_from_dict()` class method for parsing JSON. These are all generated automatically from the Juju Go code, and should *never* be modified by AI.
+Frozen dataclasses representing structured Juju output. Each has a `_from_dict()` class method for parsing JSON. These were originally generated from the Juju Go code (see the header comment in each file for the regeneration branch) and are hand-maintained since - treat them as a stable contract and never restructure them as AI.
 
 ### Wait Pattern: `jubilant/_all_any.py`
 
@@ -48,7 +47,7 @@ Frozen dataclasses representing structured Juju output. Each has a `_from_dict()
 
 ### Public API
 
-Everything public is exported from `jubilant/__init__.py`. Internal modules use leading underscores. Do not add public symbols without updating `__init__.py`.
+Everything public is exported from `jubilant/__init__.py`. Internal modules use leading underscores. Do not add public symbols without updating `jubilant/__init__.py`.
 
 **Always** ensure backwards compatibility of the public API.
 
