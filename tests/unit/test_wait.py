@@ -27,7 +27,7 @@ def test_logging_wait_debug(run: mocks.Run, time: mocks.Time, caplog: pytest.Log
 
     juju.wait(lambda _: True)
 
-    assert len(caplog.records) == 1  # only logs on first call or when status changes
+    assert len(caplog.records) == 2  # status-changed diff, plus the ready-after-Xs summary
     record = caplog.records[0]
     assert record.levelname == 'DEBUG'
     message = record.getMessage()
@@ -40,6 +40,9 @@ def test_logging_wait_debug(run: mocks.Run, time: mocks.Time, caplog: pytest.Log
 + .model.cloud = 'aws'
 + .model.version = '3.0.0'"""
     )
+    ready_record = caplog.records[1]
+    assert ready_record.levelname == 'INFO'
+    assert ready_record.getMessage() == 'wait: ready after 2.000s'
 
 
 def test_logging_wait_info(run: mocks.Run, time: mocks.Time, caplog: pytest.LogCaptureFixture):
@@ -49,7 +52,7 @@ def test_logging_wait_info(run: mocks.Run, time: mocks.Time, caplog: pytest.LogC
 
     juju.wait(lambda _: True)
 
-    assert len(caplog.records) == 2  # 1 app line + 1 unit line
+    assert len(caplog.records) == 3  # 1 app line + 1 unit line + ready-after-Xs summary
     record = caplog.records[0]
     assert record.levelname == 'INFO'
     message = record.getMessage()
@@ -57,6 +60,9 @@ def test_logging_wait_info(run: mocks.Run, time: mocks.Time, caplog: pytest.LogC
     unit_record = caplog.records[1]
     assert unit_record.levelname == 'INFO'
     assert unit_record.getMessage() == '[snappass-test/0] status: active (snappass started)'
+    ready_record = caplog.records[2]
+    assert ready_record.levelname == 'INFO'
+    assert ready_record.getMessage() == 'wait: ready after 2.000s'
 
 
 def test_logging_wait_info_multiples(
@@ -69,9 +75,10 @@ def test_logging_wait_info_multiples(
 
     juju.wait(lambda _: True)
 
-    assert len(caplog.records) == 4  # 2 apps, each app has 2 units
-    for record in caplog.records:
+    assert len(caplog.records) == 5  # 2 apps, each app has 2 units, plus ready-after-Xs summary
+    for record in caplog.records[:-1]:
         assert record.levelname == 'INFO'
+    assert caplog.records[-1].getMessage() == 'wait: ready after 2.000s'
 
 
 def test_logging_wait_app_error(
@@ -90,7 +97,7 @@ def test_logging_wait_app_error(
 
     juju.wait(lambda _: True)
 
-    assert len(caplog.records) == 2  # 1 app error line + 1 unit line
+    assert len(caplog.records) == 3  # 1 app error line + 1 unit line + ready-after-Xs summary
     record = caplog.records[0]
     assert record.levelname == 'ERROR'
     message = record.getMessage()
@@ -98,6 +105,9 @@ def test_logging_wait_app_error(
     unit_record = caplog.records[1]
     assert unit_record.levelname == 'INFO'
     assert unit_record.getMessage() == '[snappass-test/0] status: active (snappass started)'
+    ready_record = caplog.records[2]
+    assert ready_record.levelname == 'INFO'
+    assert ready_record.getMessage() == 'wait: ready after 2.000s'
 
 
 def test_logging_wait_error_unit(
@@ -115,7 +125,7 @@ def test_logging_wait_error_unit(
 
     juju.wait(lambda _: True)
 
-    assert len(caplog.records) == 2  # 1 app line + 1 unit error line
+    assert len(caplog.records) == 3  # 1 app line + 1 unit error line + ready-after-Xs summary
     record = caplog.records[0]
     assert record.levelname == 'INFO'
     message = record.getMessage()
@@ -123,6 +133,9 @@ def test_logging_wait_error_unit(
     unit_record = caplog.records[1]
     assert unit_record.levelname == 'ERROR'
     assert unit_record.getMessage() == '[snappass-test/0] status: error (something bad happened)'
+    ready_record = caplog.records[2]
+    assert ready_record.levelname == 'INFO'
+    assert ready_record.getMessage() == 'wait: ready after 2.000s'
 
 
 def test_logging_wait_no_change(
@@ -148,7 +161,10 @@ def test_logging_wait_no_change(
 
     juju.wait(lambda _: helper())
 
-    assert len(caplog.records) == 2  # only log 1 unit + 1 app the first time.
+    assert len(caplog.records) == 3  # 1 unit + 1 app the first time, plus ready-after-Xs summary
+    ready_record = caplog.records[2]
+    assert ready_record.levelname == 'INFO'
+    assert ready_record.getMessage() == 'wait: ready after 3.000s'
 
 
 def test_with_model(run: mocks.Run, time: mocks.Time):
@@ -193,9 +209,10 @@ def test_modified_delay_and_successes(run: mocks.Run, time: mocks.Time):
     assert status == MINIMAL_STATUS
 
 
-def test_error(run: mocks.Run, time: mocks.Time):
+def test_error(run: mocks.Run, time: mocks.Time, caplog: pytest.LogCaptureFixture):
     run.handle(['juju', 'status', '--format', 'json'], stdout=MINIMAL_JSON)
     juju = jubilant.Juju()
+    caplog.set_level(logging.INFO, logger='jubilant.wait')
 
     with pytest.raises(jubilant.WaitError) as excinfo:
         juju.wait(lambda _: True, error=lambda _: True)
@@ -203,11 +220,16 @@ def test_error(run: mocks.Run, time: mocks.Time):
     assert len(run.calls) == 1
     assert time.monotonic() == 0
     assert 'mdl' in str(excinfo.value)
+    error_record = caplog.records[-1]
+    assert error_record.levelname == 'INFO'
+    assert 'error function' in error_record.getMessage()
+    assert 'after 0.000s' in error_record.getMessage()
 
 
-def test_timeout_default(run: mocks.Run, time: mocks.Time):
+def test_timeout_default(run: mocks.Run, time: mocks.Time, caplog: pytest.LogCaptureFixture):
     run.handle(['juju', 'status', '--format', 'json'], stdout=MINIMAL_JSON)
     juju = jubilant.Juju()
+    caplog.set_level(logging.INFO, logger='jubilant.wait')
 
     with pytest.raises(TimeoutError) as excinfo:
         juju.wait(lambda _: False)
@@ -215,6 +237,9 @@ def test_timeout_default(run: mocks.Run, time: mocks.Time):
     assert len(run.calls) == 180
     assert time.monotonic() == 180
     assert 'mdl' in str(excinfo.value)
+    timeout_record = caplog.records[-1]
+    assert timeout_record.levelname == 'INFO'
+    assert timeout_record.getMessage() == 'wait: timed out after 180.000s'
 
 
 def test_timeout_override(run: mocks.Run, time: mocks.Time):
