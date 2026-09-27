@@ -1,0 +1,23 @@
+name: dev
+base: ubuntu@26.04
+sdks:
+  - name: uv
+    channel: latest/stable
+  # `tools` installs the Pi agent harness as well as the dev tooling (node and
+  # npm are the harness's dependencies, and the mount at ~/.pi keeps its state
+  # across a `workshop refresh`). None of the actions below need it.
+  - name: project-tools
+
+# The checks CONTRIBUTING.md asks for before pushing, via the same `make`
+# targets CI uses.
+#
+# There is deliberately no integration action. Those tests need packed charms
+# (`make pack` requires charmcraft) and a Juju controller to deploy them to,
+# and an unprivileged container has neither. Run them on the host instead:
+#
+#   make integration-k8s
+#   make integration-machine
+actions:
+  format: make format
+  lint: make lint
+  unit: make unit

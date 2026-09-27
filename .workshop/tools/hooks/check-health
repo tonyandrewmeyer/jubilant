@@ -1,0 +1,11 @@
+# The SDK's whole job is installing these three, so check that all three
+# arrived: a failed apt-get or a failed installer is otherwise invisible until
+# someone tries to use the harness. node and npm are system packages, but `pi`
+# goes into the workshop user's own npm prefix, so look for it as that user.
+if node --version >/dev/null 2>&1 &&
+    npm --version >/dev/null 2>&1 &&
+    sudo -iu workshop sh -c 'command -v pi' >/dev/null 2>&1; then
+    workshopctl set-health okay
+else
+    workshopctl set-health error
+fi

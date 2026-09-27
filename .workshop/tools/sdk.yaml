@@ -1,0 +1,8 @@
+name: tools
+version: "0.1"
+summary: Development tools for jubilant, and the Pi agent harness.
+
+plugs:
+  pi-data:
+    interface: mount
+    workshop-target: /home/workshop/.pi
