@@ -1750,14 +1750,16 @@ class Juju:
             if error is not None and error(status):
                 name = getattr(error, '__qualname__', repr(error))
                 elapsed = time.monotonic() - start
-                logger.info('wait: error function %s returned true after %.3fs', name, elapsed)
+                logger.info(
+                    'wait: failed after %.1fs: error function %s returned true', elapsed, name
+                )
                 raise WaitError(f'error function {name} returned true\n{status}')
 
             if ready(status):
                 success_count += 1
                 if success_count >= successes:
                     elapsed = time.monotonic() - start
-                    logger.info('wait: ready after %.3fs', elapsed)
+                    logger.info('wait: ready after %.1fs', elapsed)
                     return status
             else:
                 success_count = 0
@@ -1765,7 +1767,7 @@ class Juju:
             time.sleep(delay)
 
         elapsed = time.monotonic() - start
-        logger.info('wait: timed out after %.3fs', elapsed)
+        logger.info('wait: timed out after %.1fs', elapsed)
         if status is None:
             raise TimeoutError(f'wait timed out after {timeout}s')
         raise TimeoutError(f'wait timed out after {timeout}s\n{status}')
