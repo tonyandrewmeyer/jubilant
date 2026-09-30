@@ -159,7 +159,7 @@ def test_logging_wait_no_change(
     count = 0
 
     def helper() -> bool:
-        # Return False 2 times, then return True.
+        # Return False once, then True.
         nonlocal count
         if count < 1:
             count += 1
