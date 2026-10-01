@@ -36,7 +36,7 @@ This documentation uses the [Diátaxis documentation structure](https://diataxis
 
 [Jubilant releases](https://github.com/canonical/jubilant/releases) are tracked on GitHub, and use [semantic versioning](https://semver.org/). To get notified when there's a new release, watch the [Jubilant repository](https://github.com/canonical/jubilant).
 
-Jubilant supports Juju 3 and 4. If you need to run your integration tests against Juju 2.9, use [Jubilant-backports](https://pypi.org/project/jubilant-backports/), a drop-in replacement for Jubilant 1.4 that adds Juju 2.9 support.
+Jubilant supports Juju 3 and 4. If you need to run your integration tests against Juju 2.9, use [Jubilant-backports](https://pypi.org/project/jubilant-backports/), a drop-in replacement for Jubilant 1.4 that supports Juju 2.9, 3, and 4.
 
 ## Project and community
 
