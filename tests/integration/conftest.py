@@ -66,7 +66,7 @@ def ssh_key(request: pytest.FixtureRequest, juju_version: jubilant.Version) -> s
     """
     if juju_version.tuple < (4, 1, 0):
         return None
-    return cast(str, request.getfixturevalue('private_key_file'))
+    return request.getfixturevalue('private_key_file')
 
 
 @pytest.fixture(scope='module')

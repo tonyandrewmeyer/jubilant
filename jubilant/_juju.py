@@ -1328,6 +1328,8 @@ class Juju:
             container: Name of container for Kubernetes charms. Defaults to the charm container.
             host_key_checks: Set to false to disable host key checking (insecure).
             scp_options: ``scp`` client options, for example ``['-r', '-C']``.
+                From Juju 4.1, ``-i`` doesn't apply to the connection to the controller.
+                Use *ssh_key* for that.
             ssh_key: Path to an SSH private key to authenticate with the controller's SSH server.
                 Requires Juju 4.1 or later.
         """
@@ -1513,6 +1515,8 @@ class Juju:
             container: Name of container for Kubernetes charms. Defaults to the charm container.
             host_key_checks: Set to false to disable host key checking (insecure).
             ssh_options: OpenSSH client options, for example ``['-i', '/path/to/private.key']``.
+                From Juju 4.1, ``-i`` doesn't apply to the connection to the controller.
+                Use *ssh_key* for that.
             user: User account to make connection with. Defaults to ``ubuntu`` account.
             ssh_key: Path to an SSH private key to authenticate with the controller's SSH server.
                 Requires Juju 4.1 or later.

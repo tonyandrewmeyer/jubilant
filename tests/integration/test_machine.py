@@ -28,6 +28,7 @@ def test_exec(juju: jubilant.Juju):
 
 
 def test_ssh(juju: jubilant.Juju, private_key_file: str, ssh_key: str | None):
+    # -i is for Juju < 4.1, which connects to the machine directly.
     ssh_options = ['-i', private_key_file]
     output = juju.ssh('ubuntu/0', 'echo', 'UNIT', ssh_options=ssh_options, ssh_key=ssh_key)
     assert output == 'UNIT\n'
@@ -47,6 +48,7 @@ def test_add_and_remove_unit(juju: jubilant.Juju):
 def test_scp_directory(
     juju: jubilant.Juju, private_key_file: str, ssh_key: str | None, tmp_path: pathlib.Path
 ):
+    # -i is for Juju < 4.1, which connects to the machine directly.
     src_dir = tmp_path / 'src' / 'mydir'
     src_dir.mkdir(parents=True)
     (src_dir / 'a.txt').write_text('A')
