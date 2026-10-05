@@ -1,3 +1,5 @@
+import pathlib
+
 import pytest
 
 import jubilant
@@ -63,6 +65,17 @@ def test_ssh_options(run: mocks.Run):
         host_key_checks=False,
         ssh_options=['-i', '/path/to/private.key'],
     )
+    assert output == 'foo\n'
+
+
+def test_ssh_key(run: mocks.Run):
+    run.handle(
+        ['juju', 'ssh', '--ssh-key', '/path/to/private.key', 'ubuntu/0', 'echo', 'foo'],
+        stdout='foo\n',
+    )
+    juju = jubilant.Juju()
+
+    output = juju.ssh('ubuntu/0', 'echo', 'foo', ssh_key=pathlib.Path('/path/to/private.key'))
     assert output == 'foo\n'
 
 
