@@ -52,6 +52,8 @@ def test_all_args(run: mocks.Run):
         '42',
         '--storage',
         'data=tmpfs,1G',
+        '--switch',
+        'ch:app',
         '--trust',
     ])
     juju = jubilant.Juju(cli_binary='/bin/juju')
@@ -66,6 +68,7 @@ def test_all_args(run: mocks.Run):
         resources={'bin': '/path'},
         revision=42,
         storage={'data': 'tmpfs,1G'},
+        switch='ch:app',
         trust=True,
     )
 

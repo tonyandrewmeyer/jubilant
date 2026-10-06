@@ -1082,6 +1082,7 @@ class Juju:
         resources: Mapping[str, str] | None = None,
         revision: int | None = None,
         storage: Mapping[str, str] | None = None,
+        switch: str | None = None,
         trust: bool = False,
     ):
         """Refresh (upgrade) an application's charm.
@@ -1097,6 +1098,9 @@ class Juju:
                 ``{'bin': '/path/to/some/binary'}``.
             revision: Charmhub revision number to deploy.
             storage: Constraints for named storage(s), for example, ``{'data': 'tmpfs,1G'}``.
+            switch: Switch to a different charm, for example, to move an application deployed
+                from a local charm back to Charmhub. Charmhub charms are specified by name,
+                for example, ``ch:mycharm``.
             trust: If true, allows charm to run hooks that require access to cloud credentials.
         """
         args = ['refresh', app]
@@ -1121,6 +1125,8 @@ class Juju:
             if storage is not None:
                 for k, v in storage.items():
                     args.extend(['--storage', f'{k}={v}'])
+            if switch is not None:
+                args.extend(['--switch', switch])
             if trust:
                 args.append('--trust')
 
