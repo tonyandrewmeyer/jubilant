@@ -29,7 +29,7 @@ $ workshop launch dev
 $ workshop run dev all
 ```
 
-The `all`, `format`, `lint`, and `unit` actions run the `make` targets with the same names. Extra arguments to `unit` are passed to `pytest`, so `workshop run dev unit -k test_defaults` is the same as `make unit ARGS='-k test_defaults'`. The workshop keeps its virtual environment outside the project directory, so it doesn't share or overwrite the `.venv` on your host.
+The `all`, `format`, `lint`, and `unit` actions run the `make` targets with the same names. Extra arguments to `unit` are passed to `pytest`, so `workshop run dev unit -k test_defaults` is the same as `make unit ARGS='-k test_defaults'`. An argument containing whitespace won't survive: the `make` recipe expands `$(ARGS)` unquoted, so `-k 'test_a and not test_b'` reaches `pytest` as four arguments whether you go through the workshop or run `make` yourself. The workshop keeps its virtual environment outside the project directory, so it doesn't share or overwrite the `.venv` on your host.
 
 The `pi` action runs Pi in the workshop, with access to the project directory but not the rest of your host. Pi's settings and credentials are kept in a mount, so they survive `workshop refresh`.
 

@@ -9,4 +9,4 @@ export UV_PROJECT_ENVIRONMENT=$UV_PROJECT_ENVIRONMENT
 EOF
 
 # Install Jubilant and its development dependencies.
-uv sync
+uv sync --locked
