@@ -48,17 +48,19 @@ def test_add_and_remove_unit(juju: jubilant.Juju):
 def test_scp_directory(
     juju: jubilant.Juju, private_key_file: str, ssh_key: str | None, tmp_path: pathlib.Path
 ):
-    # -i is for Juju < 4.1, which connects to the machine directly.
     src_dir = tmp_path / 'src' / 'mydir'
     src_dir.mkdir(parents=True)
     (src_dir / 'a.txt').write_text('A')
     (src_dir / 'b.txt').write_text('B')
 
+    # -i is for Juju < 4.1, which connects to the machine directly.
+    scp_options = ['-r', '-i', private_key_file]
+
     # Local directory to remote
     juju.scp(
         str(src_dir),
         'ubuntu/0:/tmp/mydir',
-        scp_options=['-r', '-i', private_key_file],
+        scp_options=scp_options,
         ssh_key=ssh_key,
     )
 
@@ -68,7 +70,7 @@ def test_scp_directory(
     juju.scp(
         'ubuntu/0:/tmp/mydir',
         str(dst_dir),
-        scp_options=['-r', '-i', private_key_file],
+        scp_options=scp_options,
         ssh_key=ssh_key,
     )
 
