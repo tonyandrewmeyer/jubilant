@@ -48,6 +48,8 @@ def test_ssh_options(run: mocks.Run):
             'juju',
             'ssh',
             '--no-host-key-checks',
+            '--ssh-key',
+            '/path/to/juju.key',
             'ubuntu/0',
             '-i',
             '/path/to/private.key',
@@ -63,6 +65,7 @@ def test_ssh_options(run: mocks.Run):
         'echo',
         'foo',
         host_key_checks=False,
+        ssh_key=pathlib.Path('/path/to/juju.key'),
         ssh_options=['-i', '/path/to/private.key'],
     )
     assert output == 'foo\n'
