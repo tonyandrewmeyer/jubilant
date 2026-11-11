@@ -28,11 +28,21 @@ class Run:
 
     def __init__(self):
         self._commands: dict[tuple[str, ...], tuple[int, str, str]] = {}
+        self._hangs: set[tuple[str, ...]] = set()
         self.calls: list[Call] = []
 
     def handle(self, args: list[str], *, returncode: int = 0, stdout: str = '', stderr: str = ''):
         """Handle specified command-line args with the given return code, stdout, and stderr."""
         self._commands[tuple(args)] = (returncode, stdout, stderr)
+
+    def hang(self, args: list[str]):
+        """Make specified command-line args behave as if the command never completes.
+
+        If the call has a timeout, subprocess.TimeoutExpired is raised (as subprocess.run
+        would after killing the process); without a timeout, the test fails.
+        """
+        self._commands[tuple(args)] = (0, '', '')
+        self._hangs.add(tuple(args))
 
     def __call__(
         self,
@@ -60,6 +70,9 @@ class Run:
                 timeout=timeout,
             )
         )
+        if args_tuple in self._hangs:
+            assert timeout is not None, f'command {args} would hang forever without a timeout'
+            raise subprocess.TimeoutExpired(cmd=args, timeout=timeout)
         if returncode != 0:
             raise subprocess.CalledProcessError(
                 returncode=returncode,

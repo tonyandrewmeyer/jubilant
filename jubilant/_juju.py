@@ -1738,8 +1738,10 @@ class Juju:
                 should raise an error (:class:`WaitError`).
             delay: Delay in seconds between status calls.
             timeout: Overall timeout in seconds; :class:`TimeoutError` is raised if this
-                is reached. If not specified, uses the *wait_timeout* specified when the
-                instance was created.
+                is reached. This includes time spent in each ``juju status`` call, so a status
+                call that hangs (for example, because the controller is unreachable) is stopped
+                when the timeout is reached. If not specified, uses the *wait_timeout*
+                specified when the instance was created.
             successes: Number of times *ready* must return ``True`` for the wait to succeed.
 
         Raises:
@@ -1758,7 +1760,13 @@ class Juju:
         while time.monotonic() - start < timeout:
             prev_status = status
 
-            stdout, _ = self._cli('status', '--format', 'json', log=False)
+            # Bound the status call by the time left, so that an unreachable controller can't
+            # make the wait overrun its deadline.
+            remaining = timeout - (time.monotonic() - start)
+            try:
+                stdout, _ = self._cli('status', '--format', 'json', log=False, timeout=remaining)
+            except subprocess.TimeoutExpired:
+                break
             result = json.loads(stdout)
             status = Status._from_dict(result)
 

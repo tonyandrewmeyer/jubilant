@@ -290,3 +290,43 @@ def test_timeout_zero(time: mocks.Time):
 
     assert time.monotonic() == 0
     assert 'mdl' not in str(excinfo.value)
+
+
+def test_status_call_bounded_by_remaining_timeout(run: mocks.Run, time: mocks.Time):
+    run.handle(['juju', 'status', '--format', 'json'], stdout=MINIMAL_JSON)
+    juju = jubilant.Juju()
+
+    with pytest.raises(TimeoutError):
+        juju.wait(lambda _: False, timeout=3.5)
+
+    assert [c.timeout for c in run.calls] == [3.5, 2.5, 1.5, 0.5]
+
+
+def test_status_call_hangs(run: mocks.Run, time: mocks.Time):
+    run.hang(['juju', 'status', '--format', 'json'])
+    juju = jubilant.Juju()
+
+    with pytest.raises(TimeoutError) as excinfo:
+        juju.wait(lambda _: False, timeout=2)
+
+    assert len(run.calls) == 1
+    assert run.calls[0].timeout == 2
+    assert str(excinfo.value) == 'wait timed out after 2s'
+
+
+def test_status_call_hangs_after_success(run: mocks.Run, time: mocks.Time):
+    run.handle(['juju', 'status', '--format', 'json'], stdout=MINIMAL_JSON)
+    juju = jubilant.Juju()
+    calls = 0
+
+    def ready(_: jubilant.Status) -> bool:
+        nonlocal calls
+        calls += 1
+        run.hang(['juju', 'status', '--format', 'json'])
+        return False
+
+    with pytest.raises(TimeoutError) as excinfo:
+        juju.wait(ready, timeout=5)
+
+    assert calls == 1
+    assert 'mdl' in str(excinfo.value)  # The last good status is still included.
